@@ -1,6 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi_sqlalchemy import DBSessionMiddleware
+#check if wrong
 from modal_backend import __version__
 from modal_backend.settings import get_settings
 
@@ -9,7 +10,6 @@ app = FastAPI(
     title='Сервис пользовательских модалок',
     description='Бэкенд сервиса пользовательских опросов и модалок',
     version=__version__,
-
     # Отключаем нелокальную документацию
     root_path=settings.ROOT_PATH if __version__ != 'dev' else '',
     docs_url=None if __version__ != 'dev' else '/docs',

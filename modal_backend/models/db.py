@@ -9,6 +9,7 @@ from sqlalchemy import (
     ForeignKey,
     Integer,
     String,
+    JSON,
 )
 from sqlalchemy.orm import Mapped, mapped_column
 
@@ -22,16 +23,18 @@ settings: Settings = get_settings()
 
 class ModalStatus(str, Enum):
     ACTIVE: str = "active"
-    ARCHIEVED: str = "archieved"
+    ARCHIVED: str = "archived"
 
 
 class NoteType(BaseDbModel):
+    __tablename__ = "note_type"
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     name: Mapped[str | None] = mapped_column(String, nullable=True)
     is_deleted: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
 
 
 class Group(BaseDbModel):
+    __tablename__ = "group"
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     group_id: Mapped[int] = mapped_column(Integer)
     name: Mapped[str | None] = mapped_column(String, nullable=True)
@@ -39,6 +42,7 @@ class Group(BaseDbModel):
 
 
 class Service(BaseDbModel):
+    __tablename__ = "service"
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     service_id: Mapped[int] = mapped_column(Integer)
     name: Mapped[str | None] = mapped_column(String, nullable=True)
@@ -46,18 +50,19 @@ class Service(BaseDbModel):
 
 
 class Note(BaseDbModel):
+    __tablename__ = "note"
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
-    type_id: Mapped[int] = mapped_column(Integer, ForeignKey("NoteType.id"))
+    type_id: Mapped[int] = mapped_column(Integer, ForeignKey("note_type.id"))
     header: Mapped[str] = mapped_column(String, nullable=False)
     info_text: Mapped[str | None] = mapped_column(String, nullable=True)  # type_id=1
     rating_max: Mapped[int | None] = mapped_column(Integer, nullable=True)  # type_id=2
     text: Mapped[str | None] = mapped_column(String, nullable=True)  # type_id=3
     max_length: Mapped[int | None] = mapped_column(Integer, nullable=True)  # type_id=3
-    choice_options: Mapped[list[dict] | None] = mapped_column(String, nullable=True)  # type_id=4
+    choice_options: Mapped[list[dict] | None] = mapped_column(JSON, nullable=True)  # type_id=4
     is_multiple: Mapped[bool | None] = mapped_column(Boolean, nullable=True)  # type_id=4
-    images: Mapped[list[str] | None] = mapped_column(String, nullable=True)  # type_id=5
-    group_ids: Mapped[list[int]] = mapped_column(Integer)
-    service_ids: Mapped[list[int]] = mapped_column(Integer)
+    images: Mapped[list[str] | None] = mapped_column(JSON, nullable=True)  # type_id=5
+    group_ids: Mapped[list[int]] = mapped_column(JSON)
+    service_ids: Mapped[list[int]] = mapped_column(JSON)
     frequency: Mapped[int] = mapped_column(Integer)
     start_ts: Mapped[datetime.datetime] = mapped_column(DateTime, nullable=True)
     env_ts: Mapped[datetime.datetime] = mapped_column(DateTime, nullable=True)
@@ -71,10 +76,11 @@ class Note(BaseDbModel):
 
 
 class NoteResponse(BaseDbModel):
+    __tablename__ = "note_response"
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
-    note_id: Mapped[int] = mapped_column(Integer, ForeignKey("Note.id"))
+    note_id: Mapped[int] = mapped_column(Integer, ForeignKey("note.id"))
     user_id: Mapped[int] = mapped_column(Integer)
     rating: Mapped[int | None] = mapped_column(Integer, nullable=True)  # type_id=2
     text: Mapped[str | None] = mapped_column(String, nullable=True)  # type_id=3
-    selected_choices: Mapped[list[dict] | None] = mapped_column(String, nullable=True)  # type_id=4
+    selected_choices: Mapped[list[dict] | None] = mapped_column(JSON, nullable=True)  # type_id=4
     is_deleted: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)

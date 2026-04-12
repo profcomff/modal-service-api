@@ -8,7 +8,8 @@ from sqlalchemy.orm import Query, Session, as_declarative, declared_attr
 
 from modal_backend.exceptions import AlreadyExists, ObjectNotFound
 
-#connect with migrations BaseDbModel
+
+# connect with migrations BaseDbModel
 @as_declarative()
 class Base:
     """Base class for all database entities"""

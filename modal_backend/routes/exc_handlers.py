@@ -1,6 +1,7 @@
 import starlette.requests
 from starlette.responses import JSONResponse
-#check exceptions
+
+# check exceptions
 from modal_backend.exceptions import (
     AlreadyExists,
     CommentTooLong,

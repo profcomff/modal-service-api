@@ -1,9 +1,10 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi_sqlalchemy import DBSessionMiddleware
-#check if wrong
+
 from modal_backend import __version__
 from modal_backend.settings import get_settings
+
 
 settings = get_settings()
 app = FastAPI(
@@ -30,3 +31,5 @@ app.add_middleware(
     allow_methods=settings.CORS_ALLOW_METHODS,
     allow_headers=settings.CORS_ALLOW_HEADERS,
 )
+
+# add routers

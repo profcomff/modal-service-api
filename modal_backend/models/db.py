@@ -4,12 +4,12 @@ import datetime
 from enum import Enum
 
 from sqlalchemy import (
+    JSON,
     Boolean,
     DateTime,
     ForeignKey,
     Integer,
     String,
-    JSON,
 )
 from sqlalchemy.orm import Mapped, mapped_column
 

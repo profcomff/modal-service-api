@@ -8,6 +8,53 @@ class NoteGet(Base):
     id: int
     type_id: int
     header: str
-    end_ts: datetime
+    end_ts: datetime.datetime
     status: ModalStatus
     is_available: bool = False
+
+
+class ChoiceOption(Base):
+    id: int
+    text: str
+
+
+class NotificationGet(Base):
+    id: int
+    type_id: int
+    header: str
+    group_ids: list[int] | None = None
+    service_ids: list[int] | None = None
+    frequency: int
+    start_ts: datetime.datetime | None = None
+    end_ts: datetime.datetime | None = None
+    updated_ts: datetime.datetime | None = None
+    is_always: bool
+    admin_id: int
+    status: ModalStatus
+    view_count: int
+    rejected_count: int
+    info_text: str | None = None  # type_id=1
+    rating_max: int | None = None  # type_id=2
+    text: str | None = None  # type_id=3
+    max_length: int | None = None  # type_id=3
+    choice_options: list[ChoiceOption] | None = None  # type_id=4
+    is_multiple: bool | None = None  # type_id=4
+    images: list[str] | None = None  # type_id=5
+
+
+class NotificationPost(Base):
+    type_id: int
+    header: str
+    group_ids: list[int] | None = None
+    service_ids: list[int] | None = None
+    frequency: int
+    start_ts: datetime.datetime | None = None
+    end_ts: datetime.datetime | None = None
+    is_always: bool
+    info_text: str | None = None  # type_id=1
+    rating_max: int | None = None  # type_id=2
+    text: str | None = None  # type_id=3
+    max_length: int | None = None  # type_id=3
+    choice_options: list[ChoiceOption] | None = None  # type_id=4
+    is_multiple: bool | None = None  # type_id=4
+    images: list[str] | None = None  # type_id=5

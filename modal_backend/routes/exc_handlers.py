@@ -5,7 +5,6 @@ from modal_backend.exceptions import (
     AlreadyExists,
     ForbiddenAction,
     ObjectNotFound,
-    UpdateError,
 )
 from modal_backend.schemas.base import StatusResponseModel
 
@@ -30,11 +29,4 @@ async def already_exists_handler(req: starlette.requests.Request, exc: AlreadyEx
 async def forbidden_action_handler(req: starlette.requests.Request, exc: ForbiddenAction):
     return JSONResponse(
         content=StatusResponseModel(status="Error", message=exc.eng, ru=exc.ru).model_dump(), status_code=403
-    )
-
-
-@app.exception_handler(UpdateError)
-async def update_error_handler(req: starlette.requests.Request, exc: UpdateError):
-    return JSONResponse(
-        content=StatusResponseModel(status="Error", message=exc.eng, ru=exc.ru).model_dump(), status_code=409
     )

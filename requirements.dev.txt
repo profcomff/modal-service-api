@@ -1,0 +1,7 @@
+autoflake
+black==23.11.0
+httpx
+isort
+pytest
+pytest-cov
+pytest-mock

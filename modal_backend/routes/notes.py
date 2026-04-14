@@ -25,9 +25,7 @@ async def get_notes(type_id: int = Query(None), user=Depends(UnionAuth())) -> li
 
 
 @note.post("", response_model=NotificationGet)
-async def create_note(
-    note: NotificationPost, user=Depends(UnionAuth(scopes=["modal.note.create"]))
-) -> NotificationGet:
+async def create_note(note: NotificationPost, user=Depends(UnionAuth(scopes=["modal.note.create"]))) -> NotificationGet:
     """
     Создает новую модалку.
 
@@ -35,5 +33,3 @@ async def create_note(
     """
     new_note = Note.create(session=db.session, **note.model_dump(), admin_id=user.get('id'), status=ModalStatus.ACTIVE)
     return NotificationGet.model_validate(new_note)
-
-

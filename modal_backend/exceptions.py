@@ -30,3 +30,8 @@ class AlreadyExists(ModalApiError):
 class ForbiddenAction(ModalApiError):
     def __init__(self, type: Type):
         super().__init__(f"Forbidden action with {type.__name__}", f"Запрещенное действие с объектом {type.__name__}")
+
+
+class ValueError(ModalApiError):
+    def __init__(self, value: str):
+        super().__init__(f"Value {value} is not valid", f"Значение {value} недопустимо")

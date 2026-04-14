@@ -65,7 +65,7 @@ class Note(BaseDbModel):
     service_ids: Mapped[list[int]] = mapped_column(JSON)
     frequency: Mapped[int] = mapped_column(Integer)
     start_ts: Mapped[datetime.datetime] = mapped_column(DateTime, nullable=True)
-    env_ts: Mapped[datetime.datetime] = mapped_column(DateTime, nullable=True)
+    end_ts: Mapped[datetime.datetime] = mapped_column(DateTime, nullable=True)
     updated_ts: Mapped[datetime.datetime] = mapped_column(DateTime, nullable=True)
     is_always: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
     admin_id: Mapped[int] = mapped_column(Integer)

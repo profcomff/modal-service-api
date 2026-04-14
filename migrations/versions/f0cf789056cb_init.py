@@ -57,7 +57,7 @@ def upgrade():
         sa.Column('service_ids', sa.JSON(), nullable=False),
         sa.Column('frequency', sa.Integer(), nullable=False),
         sa.Column('start_ts', sa.DateTime(), nullable=True),
-        sa.Column('env_ts', sa.DateTime(), nullable=True),
+        sa.Column('end_ts', sa.DateTime(), nullable=True),
         sa.Column('updated_ts', sa.DateTime(), nullable=True),
         sa.Column('is_always', sa.Boolean(), nullable=False),
         sa.Column('admin_id', sa.Integer(), nullable=False),

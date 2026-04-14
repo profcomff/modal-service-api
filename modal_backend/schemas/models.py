@@ -61,7 +61,7 @@ class NotificationPost(Base):
     images: list[str] | None = None  # type_id=5
 
     @model_validator(mode='after')
-    def validate_fields_according_to_type(self) -> 'NotificationPost':
+    def validate_type(self): #-> 'NotificationPost':
         type_id = self.type_id
 
         if type_id == 1:

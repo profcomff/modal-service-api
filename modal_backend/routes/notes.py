@@ -3,7 +3,7 @@ from fastapi import APIRouter, Depends, Query
 from fastapi_sqlalchemy import db
 
 from modal_backend import settings
-from modal_backend.models.db import Note
+from modal_backend.models.db import ModalStatus, Note
 from modal_backend.schemas.models import NoteGet, NotificationGet, NotificationPost
 from modal_backend.settings import Settings, get_settings
 
@@ -25,13 +25,13 @@ async def get_notes(type_id: int = Query(None), user=Depends(UnionAuth())) -> li
 
 
 @note.post("", response_model=NotificationGet)
-async def create_item(
-    item: NotificationPost, user=Depends(UnionAuth(scopes=["rental.item.create"]))
+async def create_note(
+    note: NotificationPost, user=Depends(UnionAuth(scopes=["rental.item.delete"]))  # modal.note.create
 ) -> NotificationGet:
     """
     Создает новую модалку.
 
     Права: `["modal.note.create"]`
     """
-    new_item = Note.create(session=db.session, **item.model_dump())
-    return NotificationGet.model_validate(new_item)
+    new_note = Note.create(session=db.session, **note.model_dump(), admin_id=user.get('id'), status=ModalStatus.ACTIVE)
+    return NotificationGet.model_validate(new_note)

@@ -6,6 +6,7 @@ from modal_backend import settings
 from modal_backend.models.db import ModalStatus, Note
 from modal_backend.schemas.models import NoteGet, NotificationGet, NotificationPost
 from modal_backend.settings import Settings, get_settings
+from modal_backend.utils.services import NoteService
 
 
 settings: Settings = get_settings()
@@ -15,12 +16,10 @@ note = APIRouter(prefix="/notification", tags=["Notes"])
 @note.get("", response_model=list[NoteGet])
 async def get_notes(type_id: int = Query(None), user=Depends(UnionAuth())) -> list[NoteGet]:
     """
-    Получить модалку
+    Получить список модалок по type_id.
+    В случае несуществующего type_id ошибка ObjectNotFound
     """
-    query = Note.query(session=db.session)
-    if type_id is not None:
-        query = query.filter(Note.type_id == type_id)
-    notes = query.all()
+    notes = await NoteService.get_note_by_type_id(db, type_id)
     return [NoteGet.model_validate(note) for note in notes]
 
 

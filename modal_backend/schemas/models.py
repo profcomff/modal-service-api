@@ -1,7 +1,5 @@
 import datetime
 
-from pydantic import model_validator
-
 from modal_backend.models.db import ModalStatus
 from modal_backend.schemas.base import Base
 
@@ -19,8 +17,15 @@ class ChoiceOption(Base):
     text: str
 
 
-class NoteType(Base):
-    pass
+class NoteTypePost(Base):
+    type_id: int
+    name: str
+
+
+class NoteTypeGet(Base):
+    id: int
+    type_id: int
+    name: str
 
 
 class NotificationGet(Base):

@@ -3,14 +3,13 @@ from fastapi import APIRouter, Depends, Query
 from fastapi_sqlalchemy import db
 
 from modal_backend import settings
-from modal_backend.models.db import ModalStatus, Note
 from modal_backend.schemas.models import NoteGet, NotificationGet, NotificationPost
 from modal_backend.settings import Settings, get_settings
 from modal_backend.utils.services import NoteService
 
 
 settings: Settings = get_settings()
-note = APIRouter(prefix="/notification", tags=["Notes"])
+note = APIRouter(prefix="/notification", tags=["Note"])
 
 
 @note.get("", response_model=list[NoteGet])
@@ -24,11 +23,11 @@ async def get_notes(type_id: int = Query(None), user=Depends(UnionAuth())) -> li
 
 
 @note.post("", response_model=NotificationGet)
-async def create_note_types(note: NotificationPost, user=Depends(UnionAuth())) -> NotificationGet: #scopes=["modal.note.create"]
+async def create_note(note: NotificationPost, user=Depends(UnionAuth(scopes=["modal.note.create"]))) -> NotificationGet:
     """
     Создает новую модалку.
 
     Права: `["modal.note.create"]`
     """
-    new_note = await NoteService.create(db, note, admin_id=user.get("id"))
+    new_note = await NoteService.create_note(db, note, admin_id=user.get("id"))
     return NotificationGet.model_validate(new_note)

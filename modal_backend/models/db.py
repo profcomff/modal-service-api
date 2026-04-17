@@ -29,6 +29,7 @@ class ModalStatus(str, Enum):
 class NoteType(BaseDbModel):
     __tablename__ = "note_type"
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    type_id: Mapped[int] = mapped_column(Integer, nullable=False, unique=True)
     name: Mapped[str | None] = mapped_column(String, nullable=True)
     is_deleted: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
 
@@ -36,7 +37,7 @@ class NoteType(BaseDbModel):
 class Group(BaseDbModel):
     __tablename__ = "group"
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
-    group_id: Mapped[int] = mapped_column(Integer)
+    group_id: Mapped[int] = mapped_column(Integer, nullable=False)
     name: Mapped[str | None] = mapped_column(String, nullable=True)
     is_deleted: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
 
@@ -44,7 +45,7 @@ class Group(BaseDbModel):
 class Service(BaseDbModel):
     __tablename__ = "service"
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
-    service_id: Mapped[int] = mapped_column(Integer)
+    service_id: Mapped[int] = mapped_column(Integer, nullable=False)
     name: Mapped[str | None] = mapped_column(String, nullable=True)
     is_deleted: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
 
@@ -52,7 +53,7 @@ class Service(BaseDbModel):
 class Note(BaseDbModel):
     __tablename__ = "note"
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
-    type_id: Mapped[int] = mapped_column(Integer, ForeignKey("note_type.id"))
+    type_id: Mapped[int] = mapped_column(Integer, ForeignKey("note_type.type_id"))
     header: Mapped[str] = mapped_column(String, nullable=False)
     info_text: Mapped[str | None] = mapped_column(String, nullable=True)  # type_id=1
     rating_max: Mapped[int | None] = mapped_column(Integer, nullable=True)  # type_id=2

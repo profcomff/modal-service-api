@@ -1,6 +1,6 @@
 from requests import Session
 
-from modal_backend.exceptions import AlreadyExists, ValueError
+from modal_backend.exceptions import AlreadyExists, ObjectNotFound, ValueError
 from modal_backend.models.db import ModalStatus, Note, NoteType
 from modal_backend.schemas.models import NoteTypePost, NotificationPost
 
@@ -12,13 +12,18 @@ class NoteService:
 
     @classmethod
     async def get_note_by_type_id(cls, db: Session, type_id: int):
-        NoteType.get(type_id, session=db.session)
+        note_type = NoteType.query(session=db.session).filter(NoteType.type_id == type_id).one_or_none()
+        if note_type is None:
+            raise ObjectNotFound(NoteType, type_id)
         notes = Note.query(session=db.session).filter(Note.type_id == type_id).all()
         return notes
 
     @staticmethod
-    def validate_note_by_type(data: dict):
+    def validate_note_by_type(data: dict, db: Session):
         type_id = data["type_id"]
+        note_type = NoteType.query(session=db.session).filter(NoteType.type_id == type_id).one_or_none()
+        if note_type is None:
+            raise ObjectNotFound(NoteType, type_id)
         if type_id == 1:
             info_text = data.get("info_text")
             if not info_text or not info_text.strip():
@@ -51,7 +56,7 @@ class NoteService:
     @classmethod
     async def create_note(cls, db: Session, note: NotificationPost, admin_id: int) -> Note:
         data = note.model_dump()
-        cls.validate_note_by_type(data)
+        cls.validate_note_by_type(data, db)
         new_note = Note.create(session=db.session, **data, admin_id=admin_id, status=ModalStatus.ACTIVE)
         return new_note
 

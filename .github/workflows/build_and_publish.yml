@@ -53,9 +53,9 @@ jobs:
     runs-on: [self-hosted, Linux, testing]
     environment:
       name: Testing
-      url: https://api.test.profcomff.com/?urls.primaryName=modal_backend
+      url: https://api.test.profcomff.com/?urls.primaryName=modal
     env:
-      CONTAINER_NAME: com_profcomff_api_modal_backend_test
+      CONTAINER_NAME: com_profcomff_api_modal_service_test
     permissions:
       packages: read
     steps:
@@ -94,9 +94,9 @@ jobs:
     runs-on: [self-hosted, Linux, production]
     environment:
       name: Production
-      url: https://api.profcomff.com/?urls.primaryName=modal_backend
+      url: https://api.profcomff.com/?urls.primaryName=modal
     env:
-      CONTAINER_NAME: com_profcomff_api_modal_backend
+      CONTAINER_NAME: com_profcomff_api_modal_service
     permissions:
       packages: read
     steps:

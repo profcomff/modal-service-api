@@ -3,6 +3,7 @@ from fastapi import APIRouter, Depends
 from fastapi_sqlalchemy import db
 
 from modal_backend import settings
+from modal_backend.models.db import NoteType
 from modal_backend.schemas.models import NoteTypeGet, NoteTypePost
 from modal_backend.settings import Settings, get_settings
 from modal_backend.utils.services import NoteTypeService
@@ -10,6 +11,15 @@ from modal_backend.utils.services import NoteTypeService
 
 settings: Settings = get_settings()
 notetype = APIRouter(prefix="/notificationtype", tags=["NoteType"])
+
+
+@notetype.get("", response_model=list[NoteTypeGet])
+async def get_notes(user=Depends(UnionAuth())) -> list[NoteTypeGet]:
+    """
+    Получить список типов модалок.
+    """
+    note_types = NoteType.query(session=db.session).all()
+    return [NoteTypeGet.model_validate(note) for note in note_types]
 
 
 @notetype.post("", response_model=NoteTypeGet)

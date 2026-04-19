@@ -29,5 +29,5 @@ async def create_note(note: NotificationPost, user=Depends(UnionAuth(scopes=["mo
 
     Права: `["modal.note.create"]`
     """
-    new_note = await NoteService.create_note(db, note, admin_id=user.get("id"))
+    new_note = await NoteService.create_note(db, note.model_dump(), admin_id=user.get("id"))
     return NotificationGet.model_validate(new_note)

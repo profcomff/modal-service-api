@@ -20,7 +20,7 @@ class NoteService:
 
     @staticmethod
     def validate_note_by_type(note: dict, db: Session):
-        type_id = note.get("type_id")
+        type_id = note.type_id
         note_type = NoteType.query(session=db.session).filter(NoteType.type_id == type_id).one_or_none()
         if note_type is None:
             raise ObjectNotFound(NoteType, type_id)

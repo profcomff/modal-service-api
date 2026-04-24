@@ -54,6 +54,13 @@ class ServiceService:
     """
 
     @classmethod
+    async def get_service_by_id(cls, db: Session, id: int):
+        service = Service.query(session=db.session).filter(Service.id == id).one_or_none()
+        if service is None:
+            raise ObjectNotFound(Service, id)
+        return service
+
+    @classmethod
     async def create_service(cls, db: Session, name: str):
         service = Service.query(session=db.session).filter(Service.name == name).first()
         if service:

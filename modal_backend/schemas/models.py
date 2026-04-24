@@ -28,6 +28,15 @@ class NoteTypeGet(Base):
     name: str
 
 
+class ServiceGet(Base):
+    id: int
+    name: str
+
+
+class ServicePost(Base):
+    name: str
+
+
 class NotificationGet(Base):
     id: int
     type_id: int

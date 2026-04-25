@@ -1,3 +1,5 @@
+from typing import Union
+
 from auth_lib.fastapi import UnionAuth
 from fastapi import APIRouter, Depends, Query
 from fastapi_sqlalchemy import db
@@ -30,10 +32,32 @@ note = APIRouter(prefix="/notification", tags=["Note"])
 async def get_notes(type_id: int = Query(None), user=Depends(UnionAuth())) -> list[NoteGet]:
     """
     Получить список модалок по type_id.
+
     В случае несуществующего type_id ошибка ObjectNotFound
     """
     notes = await NoteService.get_note_by_type_id(db, type_id)
     return [NoteGet.model_validate(note) for note in notes]
+
+
+@note.get("/{id}", response_model=Union[NoteInfoGet, NoteRatingGet, NoteTextGet, NoteChoiceGet, NoteImageGet])
+async def get_note(
+    id: int, user=Depends(UnionAuth())
+) -> Union[NoteInfoGet, NoteRatingGet, NoteTextGet, NoteChoiceGet, NoteImageGet]:
+    """
+    Получить полную информацию о модалке по id.
+
+    В случае несуществующего id ошибка ObjectNotFound
+    """
+    note = Note.get(session=db.session, id=id)
+    schema_type = {
+        1: NoteInfoGet,
+        2: NoteRatingGet,
+        3: NoteTextGet,
+        4: NoteChoiceGet,
+        5: NoteImageGet,
+    }
+    schema_class = schema_type.get(note.type_id)
+    return schema_class.model_validate(note)
 
 
 @note.post("/info", response_model=NoteInfoGet)

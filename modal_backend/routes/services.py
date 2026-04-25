@@ -16,8 +16,7 @@ async def get_services(
     user=Depends(UnionAuth()),
 ) -> list[ServiceGet]:
     """
-    Получить все сервисы.
-    В случае несуществующего id ошибка ObjectNotFound
+    Получить список всех сервисов.
     """
     services = await ServiceManager.get_services(db)
     return [ServiceGet.model_validate(service) for service in services]

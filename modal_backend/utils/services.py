@@ -1,7 +1,7 @@
 from requests import Session
 
 from modal_backend.exceptions import AlreadyExists, ObjectNotFound
-from modal_backend.models.db import ModalStatus, Note, NoteType
+from modal_backend.models.db import ModalStatus, Note, NoteType, Service
 from modal_backend.schemas.models import NoteTypePost, NotificationPost
 
 
@@ -46,3 +46,21 @@ class NoteTypeService:
             raise AlreadyExists(NoteType, type_id)
         new_note_type = NoteType.create(session=db.session, **data)
         return new_note_type
+
+
+class ServiceManager:
+    """
+    Сервис для работы с логикой Service и базой данных
+    """
+
+    @classmethod
+    async def get_services(cls, db: Session):
+        return Service.query(session=db.session).all()
+
+    @classmethod
+    async def create_service(cls, db: Session, service_id: int, name: str):
+        service = Service.query(session=db.session).filter(Service.service_id == service_id).first()
+        if service:
+            raise AlreadyExists(Service, service_id)
+        new_service = Service.create(session=db.session, service_id=service_id, name=name)
+        return new_service

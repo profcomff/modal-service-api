@@ -29,12 +29,26 @@ note = APIRouter(prefix="/notification", tags=["Note"])
 
 
 @note.get("", response_model=list[NoteGet])
-async def get_notes(type_id: int = Query(None), user=Depends(UnionAuth())) -> list[NoteGet]:
+async def get_notes(
+    limit: int = 10,
+    offset: int = 0,
+    type_id: int = Query(None),
+    groups_id: list[int] = Query(None),
+    services_id: list[int] = Query(None),
+    status: str = Query(
+        enum=["active", "archived"],
+        default=None,
+    ),
+    asc_order: bool = False,
+    user=Depends(UnionAuth()),
+) -> list[NoteGet]:
     """
     Получить список модалок по type_id.
 
     В случае несуществующего type_id ошибка ObjectNotFound
     """
+
+    # add filter logic
     notes = await NoteService.get_note_by_type_id(db, type_id)
     return [NoteGet.model_validate(note) for note in notes]
 

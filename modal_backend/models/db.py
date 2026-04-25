@@ -45,6 +45,7 @@ class Group(BaseDbModel):
 class Service(BaseDbModel):
     __tablename__ = "service"
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    service_id: Mapped[int] = mapped_column(Integer, nullable=False)
     name: Mapped[str | None] = mapped_column(String, nullable=True)
     is_deleted: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
 

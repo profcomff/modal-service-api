@@ -30,10 +30,12 @@ class NoteTypeGet(Base):
 
 class ServiceGet(Base):
     id: int
+    service_id: int
     name: str
 
 
 class ServicePost(Base):
+    service_id: int
     name: str
 
 

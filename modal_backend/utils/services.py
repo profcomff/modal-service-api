@@ -48,22 +48,19 @@ class NoteTypeService:
         return new_note_type
 
 
-class ServiceService:
+class ServiceManager:
     """
     Сервис для работы с логикой Service и базой данных
     """
 
     @classmethod
-    async def get_service_by_id(cls, db: Session, id: int):
-        service = Service.query(session=db.session).filter(Service.id == id).one_or_none()
-        if service is None:
-            raise ObjectNotFound(Service, id)
-        return service
+    async def get_services(cls, db: Session):
+        return Service.query(session=db.session).all()
 
     @classmethod
-    async def create_service(cls, db: Session, name: str):
-        service = Service.query(session=db.session).filter(Service.name == name).first()
+    async def create_service(cls, db: Session, service_id: int, name: str):
+        service = Service.query(session=db.session).filter(Service.service_id == service_id).first()
         if service:
-            raise AlreadyExists(Service, name)
-        new_service = Service.create(session=db.session, name=name)
+            raise AlreadyExists(Service, service_id)
+        new_service = Service.create(session=db.session, service_id=service_id, name=name)
         return new_service

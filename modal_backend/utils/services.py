@@ -1,7 +1,7 @@
 from requests import Session
 
 from modal_backend.exceptions import AlreadyExists, ObjectNotFound
-from modal_backend.models.db import ModalStatus, Note, NoteType, Service
+from modal_backend.models.db import Group, ModalStatus, Note, NoteType, Service
 from modal_backend.schemas.models import NoteTypePost, NotificationPost
 
 
@@ -64,3 +64,17 @@ class ServiceManager:
             raise AlreadyExists(Service, service_id)
         new_service = Service.create(session=db.session, service_id=service_id, name=name)
         return new_service
+
+
+class GroupService:
+    """ "
+    Сервис для работы с логикой Group и базой данных
+    """
+
+    @classmethod
+    async def create_group(cls, db: Session, group_id: int, name: str):
+        group = Group.query(session=db.session).filter(Group.group_id == group_id).first()
+        if group:
+            raise AlreadyExists(Group, group_id)
+        new_group = Group.create(session=db.session, group_id=group_id, name=name)
+        return new_group

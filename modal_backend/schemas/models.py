@@ -109,3 +109,14 @@ class NoteChoicePost(NotificationPost):  # type_id=4
 
 class NoteImagePost(NotificationPost):  # type_id=5
     images: list[str] | None = None
+
+
+class GroupGet(Base):
+    id: int
+    group_id: int
+    name: str
+
+
+class GroupPost(Base):
+    group_id: int
+    name: str

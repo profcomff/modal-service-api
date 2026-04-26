@@ -2,7 +2,7 @@ from requests import Session
 
 from modal_backend.exceptions import AlreadyExists, ObjectNotFound
 from modal_backend.models.db import Group, ModalStatus, Note, NoteType, Service
-from modal_backend.schemas.models import GroupPost, NoteTypePost, NotificationPost
+from modal_backend.schemas.models import NoteTypePost, NotificationPost
 
 
 class NoteService:
@@ -72,10 +72,7 @@ class GroupService:
     """
 
     @classmethod
-    async def create_service(cls, db: Session, group: GroupPost):
-        data = group.model_dump()
-        group_id = data.get("group_id")
-        name = data.get("name")
+    async def create_group(cls, db: Session, group_id: int, name: str):
         group = Group.query(session=db.session).filter(Group.group_id == group_id).first()
         if group:
             raise AlreadyExists(Group, group_id)

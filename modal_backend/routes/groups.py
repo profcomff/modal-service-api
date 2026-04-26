@@ -12,9 +12,13 @@ group = APIRouter(prefix="/group", tags=["Group"])
 
 
 @group.post("", response_model=GroupGet)
-async def post_group(group: GroupPost, user=Depends(UnionAuth())) -> GroupGet:
-    """ "
-    Создает группу
+async def create_group(group: GroupPost, user=Depends(UnionAuth(scopes=["modal.group.create"]))) -> GroupGet:
     """
-    new_group = await GroupService.create_service(db, group)
-    return new_group
+    Создает новую группу
+
+    Scopes: `["modal.group.create"]`
+
+    Исключение **AlreadyExists**, если группа с введеным `group_id` уже существует
+    """
+    new_group = await GroupService.create_group(db, **group.model_dump())
+    return GroupGet.model_validate(new_group)

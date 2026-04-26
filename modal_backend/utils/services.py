@@ -67,7 +67,7 @@ class ServiceManager:
 
 
 class GroupService:
-    """ "
+    """
     Сервис для работы с логикой Group и базой данных
     """
 
@@ -78,3 +78,7 @@ class GroupService:
             raise AlreadyExists(Group, group_id)
         new_group = Group.create(session=db.session, group_id=group_id, name=name)
         return new_group
+
+    @classmethod
+    async def get_groups(cls, db: Session):
+        return Group.query(session=db.session).all()

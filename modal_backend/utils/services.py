@@ -54,10 +54,6 @@ class ServiceManager:
     """
 
     @classmethod
-    async def get_services(cls, db: Session):
-        return Service.query(session=db.session).all()
-
-    @classmethod
     async def create_service(cls, db: Session, service_id: int, name: str):
         service = Service.query(session=db.session).filter(Service.service_id == service_id).first()
         if service:
@@ -67,7 +63,7 @@ class ServiceManager:
 
 
 class GroupService:
-    """ "
+    """
     Сервис для работы с логикой Group и базой данных
     """
 

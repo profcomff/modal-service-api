@@ -2,6 +2,7 @@ from auth_lib.fastapi import UnionAuth
 from fastapi import APIRouter, Depends
 from fastapi_sqlalchemy import db
 
+from modal_backend.models.db import Group
 from modal_backend.schemas.models import GroupGet, GroupPost
 from modal_backend.settings import Settings, get_settings
 from modal_backend.utils.services import GroupService
@@ -22,3 +23,12 @@ async def create_group(group: GroupPost, user=Depends(UnionAuth(scopes=["modal.g
     """
     new_group = await GroupService.create_group(db, **group.model_dump())
     return GroupGet.model_validate(new_group)
+
+
+@group.get("", response_model=list[GroupGet])
+async def get_groups(user=Depends(UnionAuth())) -> list[GroupGet]:
+    """
+    Получает список всех групп
+    """
+    groups = Group.query(session=db.session).all()
+    return [GroupGet.model_validate(group) for group in groups]

@@ -2,6 +2,7 @@ from auth_lib.fastapi import UnionAuth
 from fastapi import APIRouter, Depends
 from fastapi_sqlalchemy import db
 
+from modal_backend.models.db import Service
 from modal_backend.schemas.models import ServiceGet, ServicePost
 from modal_backend.settings import Settings, get_settings
 from modal_backend.utils.services import ServiceManager
@@ -18,7 +19,7 @@ async def get_services(
     """
     Получить список всех сервисов.
     """
-    services = await ServiceManager.get_services(db)
+    services = Service.query(session=db.session).all()
     return [ServiceGet.model_validate(service) for service in services]
 
 

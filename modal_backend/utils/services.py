@@ -54,10 +54,6 @@ class ServiceManager:
     """
 
     @classmethod
-    async def get_services(cls, db: Session):
-        return Service.query(session=db.session).all()
-
-    @classmethod
     async def create_service(cls, db: Session, service_id: int, name: str):
         service = Service.query(session=db.session).filter(Service.service_id == service_id).first()
         if service:
@@ -78,7 +74,3 @@ class GroupService:
             raise AlreadyExists(Group, group_id)
         new_group = Group.create(session=db.session, group_id=group_id, name=name)
         return new_group
-
-    @classmethod
-    async def get_groups(cls, db: Session):
-        return Group.query(session=db.session).all()

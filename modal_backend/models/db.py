@@ -10,7 +10,9 @@ from sqlalchemy import (
     ForeignKey,
     Integer,
     String,
+    true,
 )
+from sqlalchemy.ext.hybrid import hybrid_method
 from sqlalchemy.orm import Mapped, mapped_column
 
 from modal_backend.settings import Settings, get_settings
@@ -74,6 +76,12 @@ class Note(BaseDbModel):
     view_count: Mapped[int] = mapped_column(Integer, default=0)
     rejected_count: Mapped[int] = mapped_column(Integer, default=0)
     is_deleted: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
+
+    @hybrid_method
+    def search_by_type_id(self, query: int) -> bool:
+        if not self.query:
+            return true()
+        return Note.type_id == query
 
 
 class NoteResponse(BaseDbModel):

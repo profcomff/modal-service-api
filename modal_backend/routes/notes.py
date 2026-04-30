@@ -48,8 +48,7 @@ async def get_notes(
     В случае несуществующего type_id ошибка ObjectNotFound
     """
 
-    # add filter logic
-    notes = await NoteService.get_note_by_type_id(db, type_id)
+    notes = await NoteService.get_note_by_type_id(db, type_id, limit, offset, groups_id, services_id, status, asc_order)
     return [NoteGet.model_validate(note) for note in notes]
 
 

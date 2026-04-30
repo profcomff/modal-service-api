@@ -11,11 +11,19 @@ class NoteService:
     """
 
     @classmethod
-    async def get_note_by_type_id(cls, db: Session, type_id: int):
-        note_type = NoteType.query(session=db.session).filter(NoteType.type_id == type_id).one_or_none()
-        if note_type is None:
-            raise ObjectNotFound(NoteType, type_id)
-        notes = Note.query(session=db.session).filter(Note.type_id == type_id).all()
+    async def get_note_by_type_id(
+        cls,
+        db: Session,
+        type_id: int,
+        limit: int,
+        offset: int,
+        groups_id: list[int],
+        services_id: list[int],
+        status: str,
+        asc_order: bool,
+    ):
+        # add filter logic
+        notes = Note.query(session=db.session).filter(Note.search_by_type_id(type_id)).limit(limit).offset(offset).all()
         return notes
 
     @staticmethod

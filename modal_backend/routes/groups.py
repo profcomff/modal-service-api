@@ -14,7 +14,7 @@ group = APIRouter(prefix="/group", tags=["Group"])
 
 
 @group.post("", response_model=GroupGet)
-async def create_group(group: GroupPost, user=Depends(UnionAuth(["modal.group.create"]))) -> GroupGet:
+async def create_group(group: GroupPost, user=Depends(UnionAuth(scopes=["modal.group.create"]))) -> GroupGet:
     """
     Создает новую группу
 

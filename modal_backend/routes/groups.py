@@ -3,10 +3,11 @@ from fastapi import APIRouter, Depends
 from fastapi_sqlalchemy import db
 
 from modal_backend.models.db import Group
+from modal_backend.schemas.base import StatusResponseModel
 from modal_backend.schemas.models import GroupGet, GroupPost
 from modal_backend.settings import Settings, get_settings
 from modal_backend.utils.services import GroupService
-from modal_backend.schemas.base import StatusResponseModel
+
 
 settings: Settings = get_settings()
 group = APIRouter(prefix="/group", tags=["Group"])
@@ -32,6 +33,7 @@ async def get_groups(user=Depends(UnionAuth())) -> list[GroupGet]:
     """
     groups = Group.query(session=db.session).all()
     return [GroupGet.model_validate(group) for group in groups]
+
 
 @group.delete("/{id}", response_model=StatusResponseModel)
 async def delete_group(id: int, user=Depends(UnionAuth(scopes=["modal.group.delete"]))):

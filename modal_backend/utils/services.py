@@ -2,8 +2,9 @@ from requests import Session
 
 from modal_backend.exceptions import AlreadyExists, ObjectNotFound
 from modal_backend.models.db import Group, ModalStatus, Note, NoteType, Service
-from modal_backend.schemas.models import NoteTypePost, NotificationPost
 from modal_backend.schemas.base import StatusResponseModel
+from modal_backend.schemas.models import NoteTypePost, NotificationPost
+
 
 class NoteService:
     """
@@ -69,6 +70,7 @@ class ServiceManager:
         Service.delete(session=db.session, id=id)
         return StatusResponseModel(status="Success", message="Service has been deleted", ru="Сервис был удален")
 
+
 class GroupService:
     """
     Сервис для работы с логикой Group и базой данных
@@ -81,7 +83,7 @@ class GroupService:
             raise AlreadyExists(Group, group_id)
         new_group = Group.create(session=db.session, group_id=group_id, name=name)
         return new_group
-   
+
     @classmethod
     async def delete_group(cls, db: Session, id: int):
         check_group = Group.get(session=db.session, id=id)

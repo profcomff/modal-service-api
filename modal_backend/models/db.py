@@ -10,8 +10,12 @@ from sqlalchemy import (
     ForeignKey,
     Integer,
     String,
+    cast,
+    desc,
+    or_,
     true,
 )
+from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.ext.hybrid import hybrid_method
 from sqlalchemy.orm import Mapped, mapped_column
 
@@ -79,9 +83,29 @@ class Note(BaseDbModel):
 
     @hybrid_method
     def search_by_type_id(self, query: int) -> bool:
-        if not self.query:
+        if query is None:
             return true()
         return Note.type_id == query
+
+    @hybrid_method
+    def search_by_group_ids(self, query: list[int]) -> bool:
+        if not query:
+            return true()
+        group_ids_jsonb = cast(Note.group_ids, JSONB)
+        return or_(*(group_ids_jsonb.contains([qid]) for qid in query))
+
+    @hybrid_method
+    def search_by_service_ids(self, query: list[int]) -> bool:
+        if not query:
+            return true()
+        service_ids_jsonb = cast(Note.service_ids, JSONB)
+        return or_(*(service_ids_jsonb.contains([qid]) for qid in query))
+
+    @hybrid_method
+    def order_by_start_ts(
+        self, query: str, asc_order: bool
+    ) -> UnaryExpression[datetime.datetime] | InstrumentedAttribute:
+        return getattr(Note, query) if asc_order else desc(getattr(Note, query))
 
 
 class NoteResponse(BaseDbModel):

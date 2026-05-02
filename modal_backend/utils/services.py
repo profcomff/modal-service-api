@@ -11,7 +11,7 @@ class NoteService:
     """
 
     @classmethod
-    async def get_note_by_type_id(
+    async def get_notes_by_filters(
         cls,
         db: Session,
         type_id: int,
@@ -22,8 +22,24 @@ class NoteService:
         status: str,
         asc_order: bool,
     ):
-        # add filter logic
-        notes = Note.query(session=db.session).filter(Note.search_by_type_id(type_id)).limit(limit).offset(offset).all()
+        notes_query = (
+            Note.query(session=db.session)
+            .filter(Note.search_by_type_id(type_id))
+            .filter(Note.search_by_group_ids(groups_id))
+            .filter(Note.search_by_service_ids(services_id))
+        )
+
+        if status == 'active':
+            notes_query = notes_query.filter(Note.is_deleted == 0)
+        if status == 'archived':
+            notes_query = notes_query.filter(Note.is_deleted == 1)
+
+        notes_query = notes_query.order_by(Note.order_by_start_ts("start_ts", asc_order))
+        notes = notes_query.limit(limit).offset(offset).all()
+
+        if not notes:
+            raise ObjectNotFound(Note, 'all')
+
         return notes
 
     @staticmethod

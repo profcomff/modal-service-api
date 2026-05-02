@@ -40,15 +40,35 @@ async def get_notes(
         default=None,
     ),
     asc_order: bool = False,
-    user=Depends(UnionAuth()),
+    #user=Depends(UnionAuth()),
 ) -> list[NoteGet]:
     """
-    Получить список модалок по type_id.
+    Получить список модалок по фильтрам
+
+    `limit` - максимальное количество возвращаемых комментариев
+
+    `offset` -  смещение, определяющее, с какого по порядку комментария начинать выборку.
+    Если без смещения возвращается комментарий с условным номером N,
+    то при значении offset = X будет возвращаться комментарий с номером N + X
+
+    `status` - возможные значения `"active", "archived"`.
+    Если передано `'active'` - возвращается список активных комментариев
+    Если передано `'archived'` - возвращается список архивированных комментариев
+
+    `type_id` - вернет все модалки конкретного типа по type_id типа
+
+    `groups_id` - вернет все модалки с конкретным groups_id
+
+    `services_id` - вернет все модалки сервиса по id
+
+    `asc_order` -Если передано true, сортировать в порядке возрастания. Иначе - в порядке убывания
 
     В случае несуществующего type_id ошибка ObjectNotFound
     """
 
-    notes = await NoteService.get_note_by_type_id(db, type_id, limit, offset, groups_id, services_id, status, asc_order)
+    notes = await NoteService.get_notes_by_filters(
+        db, type_id, limit, offset, groups_id, services_id, status, asc_order
+    )
     return [NoteGet.model_validate(note) for note in notes]
 
 

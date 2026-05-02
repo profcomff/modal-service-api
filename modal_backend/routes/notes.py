@@ -40,7 +40,7 @@ async def get_notes(
         default=None,
     ),
     asc_order: bool = False,
-    #user=Depends(UnionAuth()),
+    user=Depends(UnionAuth()),
 ) -> list[NoteGet]:
     """
     Получить список модалок по фильтрам

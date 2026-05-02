@@ -6,14 +6,14 @@ from modal_backend.models.db import Group
 from modal_backend.schemas.models import GroupGet, GroupPost
 from modal_backend.settings import Settings, get_settings
 from modal_backend.utils.services import GroupService
-
+from modal_backend.schemas.base import StatusResponseModel
 
 settings: Settings = get_settings()
 group = APIRouter(prefix="/group", tags=["Group"])
 
 
 @group.post("", response_model=GroupGet)
-async def create_group(group: GroupPost, user=Depends(UnionAuth(scopes=["modal.group.create"]))) -> GroupGet:
+async def create_group(group: GroupPost, user=Depends(UnionAuth(["modal.group.create"]))) -> GroupGet:
     """
     Создает новую группу
 
@@ -32,3 +32,15 @@ async def get_groups(user=Depends(UnionAuth())) -> list[GroupGet]:
     """
     groups = Group.query(session=db.session).all()
     return [GroupGet.model_validate(group) for group in groups]
+
+@group.delete("/{id}", response_model=StatusResponseModel)
+async def delete_group(id: int, user=Depends(UnionAuth(scopes=["modal.group.delete"]))):
+    """
+    Удаляет группу из базы данных
+
+    Scopes: `["modal.group.delete"]`
+
+    Исключение **ObjectNotFound**, если `id` не найден
+    """
+    del_group = await GroupService.delete_group(db, id)
+    return del_group

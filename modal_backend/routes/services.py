@@ -6,7 +6,7 @@ from modal_backend.models.db import Service
 from modal_backend.schemas.models import ServiceGet, ServicePost
 from modal_backend.settings import Settings, get_settings
 from modal_backend.utils.services import ServiceManager
-
+from modal_backend.schemas.base import StatusResponseModel
 
 settings: Settings = get_settings()
 service = APIRouter(prefix="/service", tags=["Service"])
@@ -35,3 +35,15 @@ async def create_service(
     """
     new_service = await ServiceManager.create_service(db, **service_info.model_dump())
     return ServiceGet.model_validate(new_service)
+
+@service.delete("/{id}", response_model=StatusResponseModel)
+async def delete_service(id: int, user=Depends(UnionAuth(scopes=["modal.service.delete"]))):
+    """
+    Удаляет сервис из базы данных
+
+    Scopes: `["modal.service.delete"]`
+
+    Исключение **ObjectNotFound**, если `id` не найден
+    """
+    del_service = await ServiceManager.delete_service(db, id)
+    return del_service

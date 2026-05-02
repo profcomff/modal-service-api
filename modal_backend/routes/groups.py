@@ -36,7 +36,7 @@ async def get_groups(user=Depends(UnionAuth())) -> list[GroupGet]:
 
 
 @group.delete("/{id}", response_model=StatusResponseModel)
-async def delete_group(id: int, user=Depends(UnionAuth(scopes=["modal.group.delete"]))):
+async def delete_group(id: int, user=Depends(UnionAuth(scopes=["modal.group.delete"]))) -> StatusResponseModel:
     """
     Удаляет группу из базы данных
 
@@ -44,5 +44,4 @@ async def delete_group(id: int, user=Depends(UnionAuth(scopes=["modal.group.dele
 
     Исключение **ObjectNotFound**, если `id` не найден
     """
-    del_group = await GroupService.delete_group(db, id)
-    return del_group
+    return await GroupService.delete_group(db, id)

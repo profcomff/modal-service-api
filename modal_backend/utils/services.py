@@ -64,11 +64,11 @@ class ServiceManager:
 
     @classmethod
     async def delete_service(cls, db: Session, id: int):
-        check_service = Service.get(session=db.session, id=id)
-        if check_service is None:
-            raise ObjectNotFound(Service, id)
+        Service.get(session=db.session, id=id)
         Service.delete(session=db.session, id=id)
-        return StatusResponseModel(status="Success", message="Service has been deleted", ru="Сервис был удален")
+        return StatusResponseModel(
+            status="Success", message="Service has been successfully deleted", ru="Сервис успешно удален"
+        )
 
 
 class GroupService:
@@ -86,8 +86,8 @@ class GroupService:
 
     @classmethod
     async def delete_group(cls, db: Session, id: int):
-        check_group = Group.get(session=db.session, id=id)
-        if check_group is None:
-            raise ObjectNotFound(Group, id)
+        Group.get(session=db.session, id=id)
         Group.delete(session=db.session, id=id)
-        return StatusResponseModel(status="Success", message="Group has been deleted", ru="Группа была удалена")
+        return StatusResponseModel(
+            status="Success", message="Group has been successfully deleted", ru="Группа успешно удалена"
+        )

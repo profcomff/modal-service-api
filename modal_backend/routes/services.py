@@ -39,7 +39,7 @@ async def create_service(
 
 
 @service.delete("/{id}", response_model=StatusResponseModel)
-async def delete_service(id: int, user=Depends(UnionAuth(scopes=["modal.service.delete"]))):
+async def delete_service(id: int, user=Depends(UnionAuth(scopes=["modal.service.delete"]))) -> StatusResponseModel:
     """
     Удаляет сервис из базы данных
 
@@ -47,5 +47,4 @@ async def delete_service(id: int, user=Depends(UnionAuth(scopes=["modal.service.
 
     Исключение **ObjectNotFound**, если `id` не найден
     """
-    del_service = await ServiceManager.delete_service(db, id)
-    return del_service
+    return await ServiceManager.delete_service(db, id)

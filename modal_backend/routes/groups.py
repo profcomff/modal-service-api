@@ -48,7 +48,9 @@ async def delete_group(id: int, user=Depends(UnionAuth(scopes=["modal.group.dele
 
 
 @group.patch("/{id}", response_model=GroupGet)
-async def update_group(id: int, group_info: GroupPost, user=Depends(UnionAuth())) -> GroupGet:
+async def update_group(
+    id: int, group_info: GroupPost, user=Depends(UnionAuth(scopes=["modal.group.update"]))
+) -> GroupGet:
     """
     Обновляет данные о группе
 
@@ -58,5 +60,5 @@ async def update_group(id: int, group_info: GroupPost, user=Depends(UnionAuth())
 
     Исключение **AlreadyExists**, если изменений нет
     """
-    group = await GroupService.update_group(db, id, group_info)
-    return GroupGet.model_validate(group)
+    updated_group = await GroupService.update_group(db, id, group_info)
+    return GroupGet.model_validate(updated_group)

@@ -102,6 +102,6 @@ class GroupService:
 
     @classmethod
     async def update_group(cls, db: Session, id: int, group_info: GroupPost):
-        group = Group.get(session=db.session, id=id)
-        updated_group = Group.update(group.id, session=db.session, **group_info.model_dump())
+        Group.get(session=db.session, id=id)
+        updated_group = Group.update(id, session=db.session, **group_info.model_dump())
         return updated_group

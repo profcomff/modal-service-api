@@ -45,3 +45,18 @@ async def delete_group(id: int, user=Depends(UnionAuth(scopes=["modal.group.dele
     Исключение **ObjectNotFound**, если `id` не найден
     """
     return await GroupService.delete_group(db, id)
+
+
+@group.patch("/{id}", response_model=GroupGet)
+async def update_group(id: int, group_info: GroupPost, user=Depends(UnionAuth())) -> GroupGet:
+    """
+    Обновляет данные о группе
+
+    Scopes: `["modal.group.update"]`
+
+    Исключение **ObjectNotFound**, если `id` не найден
+
+    Исключение **AlreadyExists**, если изменений нет
+    """
+    group = await GroupService.update_group(db, id, group_info)
+    return GroupGet.model_validate(group)

@@ -3,7 +3,7 @@ from requests import Session
 from modal_backend.exceptions import AlreadyExists, ObjectNotFound
 from modal_backend.models.db import Group, ModalStatus, Note, NoteType, Service
 from modal_backend.schemas.base import StatusResponseModel
-from modal_backend.schemas.models import NoteTypePost, NotificationPost
+from modal_backend.schemas.models import GroupPost, NoteTypePost, NotificationPost
 
 
 class NoteService:
@@ -99,3 +99,9 @@ class GroupService:
         return StatusResponseModel(
             status="Success", message="Group has been successfully deleted", ru="Группа успешно удалена"
         )
+
+    @classmethod
+    async def update_group(cls, db: Session, id: int, group_info: GroupPost):
+        group = Group.get(session=db.session, id=id)
+        updated_group = Group.update(group.id, session=db.session, **group_info.model_dump())
+        return updated_group

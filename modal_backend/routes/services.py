@@ -38,7 +38,7 @@ async def create_service(
     return ServiceGet.model_validate(new_service)
 
 
-@service.put("/{id}", response_model=ServiceGet)
+@service.patch("/{id}", response_model=ServiceGet)
 async def update_service(
     id: int,
     service_info: ServicePost,

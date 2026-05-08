@@ -38,6 +38,21 @@ async def create_service(
     return ServiceGet.model_validate(new_service)
 
 
+@service.patch("/{id}", response_model=ServiceGet)
+async def update_service(
+    id: int,
+    service_info: ServicePost,
+    user=Depends(UnionAuth(scopes=["modal.service.update"])),
+) -> ServiceGet:
+    """
+    Обновляет сервис по `id`.
+
+    Scopes: `["modal.service.update"]`
+    """
+    updated = await ServiceManager.update_service(db, id, service_info)
+    return ServiceGet.model_validate(updated)
+
+
 @service.delete("/{id}", response_model=StatusResponseModel)
 async def delete_service(id: int, user=Depends(UnionAuth(scopes=["modal.service.delete"]))) -> StatusResponseModel:
     """

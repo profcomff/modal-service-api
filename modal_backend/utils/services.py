@@ -3,7 +3,7 @@ from requests import Session
 from modal_backend.exceptions import AlreadyExists, ObjectNotFound
 from modal_backend.models.db import Group, ModalStatus, Note, NoteType, Service
 from modal_backend.schemas.base import StatusResponseModel
-from modal_backend.schemas.models import GroupPost, NoteTypePost, NotificationPost
+from modal_backend.schemas.models import GroupPost, NoteTypePost, NotificationPost, ServicePost
 
 
 class NoteService:
@@ -77,6 +77,12 @@ class ServiceManager:
         return StatusResponseModel(
             status="Success", message="Service has been successfully deleted", ru="Сервис успешно удален"
         )
+
+    @classmethod
+    async def update_service(cls, db: Session, id: int, service_info: ServicePost):
+        Service.get(session=db.session, id=id)
+        updated_service = Service.update(id, session=db.session, **service_info.model_dump())
+        return updated_service
 
 
 class GroupService:

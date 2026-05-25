@@ -30,9 +30,9 @@ class NoteService:
         )
 
         if status == 'active':
-            notes_query = notes_query.filter(Note.is_deleted == 0)
+            notes_query = notes_query.filter(Note.status == "active")
         if status == 'archived':
-            notes_query = notes_query.filter(Note.is_deleted == 1)
+            notes_query = notes_query.filter(Note.status == "archived")
 
         notes_query = notes_query.order_by(Note.order_by_start_ts("start_ts", asc_order))
         notes = notes_query.limit(limit).offset(offset).all()

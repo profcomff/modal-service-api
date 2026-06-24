@@ -1,3 +1,4 @@
+from alembic.environment import List, Optional
 from requests import Session
 
 from modal_backend.exceptions import AlreadyExists, ObjectNotFound
@@ -14,27 +15,25 @@ class NoteService:
     async def get_notes_by_filters(
         cls,
         db: Session,
-        type_id: int,
-        limit: int,
-        offset: int,
-        groups_id: list[int],
-        services_id: list[int],
-        status: str,
-        asc_order: bool,
+        type_id: Optional[int] = None,
+        limit: int = 100,
+        offset: int = 0,
+        groups_id: Optional[List[int]] = None,
+        services_id: Optional[List[int]] = None,
+        status: Optional[str] = None,
+        asc_order: Optional[bool] = True,
     ):
         notes_query = (
             Note.query(session=db.session)
             .filter(Note.search_by_type_id(type_id))
             .filter(Note.search_by_group_ids(groups_id))
             .filter(Note.search_by_service_ids(services_id))
+            .filter(Note.search_by_status(status))
         )
 
-        if status == 'active':
-            notes_query = notes_query.filter(Note.status == "active")
-        if status == 'archived':
-            notes_query = notes_query.filter(Note.status == "archived")
+        order_expr = Note.start_ts.asc() if asc_order else Note.start_ts.desc()
+        notes_query = notes_query.order_by(order_expr)
 
-        notes_query = notes_query.order_by(Note.order_by_start_ts("start_ts", asc_order))
         notes = notes_query.limit(limit).offset(offset).all()
 
         if not notes:

@@ -11,7 +11,6 @@ from sqlalchemy import (
     Integer,
     String,
     cast,
-    desc,
     or_,
     true,
 )
@@ -102,10 +101,12 @@ class Note(BaseDbModel):
         return or_(*(service_ids_jsonb.contains([qid]) for qid in query))
 
     @hybrid_method
-    def order_by_start_ts(
-        self, query: str, asc_order: bool
-    ) -> UnaryExpression[datetime.datetime] | InstrumentedAttribute:
-        return getattr(Note, query) if asc_order else desc(getattr(Note, query))
+    def search_by_status(self, status: Optional[str] = None) -> bool:
+        if status == "active":
+            return Note.status == "active"
+        if status == "archived":
+            return Note.status == "archived"
+        return true()
 
 
 class NoteResponse(BaseDbModel):

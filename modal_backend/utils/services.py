@@ -15,13 +15,13 @@ class NoteService:
     async def get_notes_by_filters(
         cls,
         db: Session,
-        type_id: Optional[int] = None,
-        limit: int = 100,
-        offset: int = 0,
-        groups_id: Optional[List[int]] = None,
-        services_id: Optional[List[int]] = None,
-        status: Optional[str] = None,
-        asc_order: Optional[bool] = True,
+        type_id: int,
+        groups_id: int,
+        services_id: int,
+        status: str,
+        asc_order: bool,
+        limit: Optional[int] = None,
+        offset: Optional[int] = None,
     ):
         notes_query = (
             Note.query(session=db.session)

@@ -30,8 +30,6 @@ note = APIRouter(prefix="/notification", tags=["Note"])
 
 @note.get("", response_model=list[NoteGet])
 async def get_notes(
-    limit: int = 10,
-    offset: int = 0,
     type_id: int = Query(None),
     groups_id: list[int] = Query(None),
     services_id: list[int] = Query(None),
@@ -40,6 +38,8 @@ async def get_notes(
         default=None,
     ),
     asc_order: bool = False,
+    limit: int = 10,
+    offset: int = 0,
     user=Depends(UnionAuth()),
 ) -> list[NoteGet]:
     """
@@ -67,7 +67,7 @@ async def get_notes(
     """
 
     notes = await NoteService.get_notes_by_filters(
-        db, type_id, limit, offset, groups_id, services_id, status, asc_order
+        db, type_id, groups_id, services_id, status, asc_order, limit, offset
     )
     return [NoteGet.model_validate(note) for note in notes]
 

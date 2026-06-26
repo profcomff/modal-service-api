@@ -104,9 +104,8 @@ class Note(BaseDbModel):
     def search_by_status(self, status: Optional[str] = None) -> bool:
         if status == "active":
             return Note.status == "active"
-        if status == "archived":
+        elif status == "archived":
             return Note.status == "archived"
-        return true()
 
 
 class NoteResponse(BaseDbModel):

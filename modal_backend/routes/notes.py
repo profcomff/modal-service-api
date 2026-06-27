@@ -67,7 +67,7 @@ async def get_notes(
     """
 
     notes = await NoteService.get_notes_by_filters(
-        db, type_id, groups_id, services_id, status, asc_order, limit, offset
+        db, asc_order, limit, offset, type_id, groups_id, services_id, status
     )
     return [NoteGet.model_validate(note) for note in notes]
 

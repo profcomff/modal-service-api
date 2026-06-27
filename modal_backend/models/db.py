@@ -106,6 +106,7 @@ class Note(BaseDbModel):
             return Note.status == "active"
         elif status == "archived":
             return Note.status == "archived"
+        return True
 
 
 class NoteResponse(BaseDbModel):

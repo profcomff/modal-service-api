@@ -1,4 +1,3 @@
-from alembic.environment import List, Optional
 from requests import Session
 
 from modal_backend.exceptions import AlreadyExists, ObjectNotFound
@@ -19,8 +18,8 @@ class NoteService:
         offset: int,
         asc_order: bool,
         type_id: int = None,
-        groups_id: List[int] = None,
-        services_id: List[int] = None,
+        groups_id: list[int] = None,
+        services_id: list[int] = None,
         status: str = None,
     ):
         notes_query = (

@@ -30,8 +30,6 @@ note = APIRouter(prefix="/notification", tags=["Note"])
 
 @note.get("", response_model=list[NoteGet])
 async def get_notes(
-    limit: int = 10,
-    offset: int = 0,
     type_id: int = Query(None),
     groups_id: list[int] = Query(None),
     services_id: list[int] = Query(None),
@@ -40,15 +38,37 @@ async def get_notes(
         default=None,
     ),
     asc_order: bool = False,
+    limit: int = 10,
+    offset: int = 0,
     user=Depends(UnionAuth()),
 ) -> list[NoteGet]:
     """
-    Получить список модалок по type_id.
+    Получить список модалок по фильтрам
+
+    `limit` - максимальное количество возвращаемых модалок
+
+    `offset` -  смещение, определяющее, с какой по порядку модалки начинать выборку.
+    Если без смещения возвращается модалка с условным номером N,
+    то при значении offset = X будет возвращаться модалка с номером N + X
+
+    `status` - возможные значения `"active", "archived"`.
+    Если передано `'active'` - возвращается список активных модалок
+    Если передано `'archived'` - возвращается список архивированных модалок
+
+    `type_id` - вернет все модалки конкретного типа по type_id типа
+
+    `groups_id` - вернет все модалки с конкретным groups_id
+
+    `services_id` - вернет все модалки сервиса по id
+
+    `asc_order` -Если передано true, сортировать в порядке возрастания. Иначе - в порядке убывания
 
     В случае несуществующего type_id ошибка ObjectNotFound
     """
 
-    notes = await NoteService.get_note_by_type_id(db, type_id, limit, offset, groups_id, services_id, status, asc_order)
+    notes = await NoteService.get_notes_by_filters(
+        db, limit, offset, asc_order, type_id, groups_id, services_id, status
+    )
     return [NoteGet.model_validate(note) for note in notes]
 
 

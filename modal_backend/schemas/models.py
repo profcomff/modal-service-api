@@ -119,3 +119,8 @@ class GroupGet(Base):
 class GroupPost(Base):
     group_id: int
     name: str
+
+
+class NoteStatus(Base):
+    id: int
+    status: ModalStatus

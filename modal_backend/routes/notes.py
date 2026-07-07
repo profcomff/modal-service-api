@@ -16,6 +16,7 @@ from modal_backend.schemas.models import (
     NoteInfoPost,
     NoteRatingGet,
     NoteRatingPost,
+    NoteStatus,
     NoteTextGet,
     NoteTextPost,
     NotificationGet,
@@ -185,3 +186,16 @@ async def create_note_images(
         session=db.session, type_id=5, **note.model_dump(), admin_id=user.get("id"), status=ModalStatus.ACTIVE
     )
     return NoteImageGet.model_validate(new_note)
+
+
+@note.patch("/{id}/archive", response_model=NoteStatus)
+async def update_note_status(id: int, user=Depends(UnionAuth(scopes=["modal.note.patch"]))) -> NoteStatus:
+    """
+    Архивирует модалку
+
+    Права: `["modal.note.patch"]`
+
+    Исключение **ObjectNotFound**, если `id` не найден
+    """
+    note = await NoteService.archive_note(db, id)
+    return NoteStatus.model_validate(note)

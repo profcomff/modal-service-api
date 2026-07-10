@@ -41,6 +41,22 @@ class NoteService:
 
         return notes
 
+<<<<<<< HEAD
+=======
+    @staticmethod
+    def validate_note_by_type(note: dict, db: Session):
+        type_id = note.type_id
+        note_type = NoteType.query(session=db.session).filter(NoteType.type_id == type_id).one_or_none()
+        if note_type is None:
+            raise ObjectNotFound(NoteType, type_id)
+
+    @classmethod
+    async def create_note(cls, db: Session, note: NotificationPost, admin_id: int) -> Note:
+        cls.validate_note_by_type(note, db)
+        new_note = Note.create(session=db.session, **note, admin_id=admin_id, status=ModalStatus.ACTIVE)
+        return new_note
+
+>>>>>>> 68f174a (fixes)
 
 class NoteTypeService:
     """

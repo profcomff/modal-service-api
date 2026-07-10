@@ -196,6 +196,9 @@ async def update_note_status(id: int, user=Depends(UnionAuth(scopes=["modal.note
     Права: `["modal.note.patch"]`
 
     Исключение **ObjectNotFound**, если `id` не найден
+
+    Исключение **AlreadyExists**, если модалка уже архивирована
     """
-    note = await NoteService.archive_note(db, id)
-    return NoteStatus.model_validate(note)
+    Note.get(session=db.session, id=id)
+    updated_note = Note.update(id=id, session=db.session, status=ModalStatus.ARCHIVED)
+    return NoteStatus.model_validate(updated_note)

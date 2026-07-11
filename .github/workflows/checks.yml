@@ -68,7 +68,11 @@ jobs:
       - uses: isort/isort-action@master
         with:
           requirementsFiles: "requirements.txt requirements.dev.txt"
-      - uses: psf/black@23.11.0
+      - uses: psf/black@stable
+        with:
+          version: "~=26.0"
+          options: "--check --diff"
+          src: "."
       - name: Comment if linting failed
         if: failure()
         uses: thollander/actions-comment-pull-request@v2

@@ -8,7 +8,6 @@ from modal_backend.schemas.models import GroupGet, GroupPost
 from modal_backend.settings import Settings, get_settings
 from modal_backend.utils.services import GroupService
 
-
 settings: Settings = get_settings()
 group = APIRouter(prefix="/group", tags=["Group"])
 

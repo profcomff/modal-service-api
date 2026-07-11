@@ -23,7 +23,6 @@ from modal_backend.schemas.models import (
 from modal_backend.settings import Settings, get_settings
 from modal_backend.utils.services import NoteService
 
-
 settings: Settings = get_settings()
 note = APIRouter(prefix="/notification", tags=["Note"])
 

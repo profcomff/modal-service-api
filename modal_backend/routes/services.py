@@ -8,7 +8,6 @@ from modal_backend.schemas.models import ServiceGet, ServicePost
 from modal_backend.settings import Settings, get_settings
 from modal_backend.utils.services import ServiceManager
 
-
 settings: Settings = get_settings()
 service = APIRouter(prefix="/service", tags=["Service"])
 

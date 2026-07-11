@@ -9,7 +9,6 @@ from modal_backend.routes.notes import note
 from modal_backend.routes.services import service
 from modal_backend.settings import get_settings
 
-
 settings = get_settings()
 app = FastAPI(
     title='Сервис пользовательских модалок',

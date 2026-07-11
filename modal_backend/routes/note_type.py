@@ -8,7 +8,6 @@ from modal_backend.schemas.models import NoteTypeGet, NoteTypePost
 from modal_backend.settings import Settings, get_settings
 from modal_backend.utils.services import NoteTypeService
 
-
 settings: Settings = get_settings()
 notetype = APIRouter(prefix="/notificationtype", tags=["NoteType"])
 

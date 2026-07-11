@@ -70,7 +70,6 @@ jobs:
           requirementsFiles: "requirements.txt requirements.dev.txt"
       - uses: psf/black@stable
         with:
-          version: "~=26.0"
           options: "--check --diff"
           src: "."
       - name: Comment if linting failed

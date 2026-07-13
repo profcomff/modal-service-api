@@ -69,9 +69,6 @@ jobs:
         with:
           requirementsFiles: "requirements.txt requirements.dev.txt"
       - uses: psf/black@stable
-        with:
-          options: "--check --diff"
-          src: "."
       - name: Comment if linting failed
         if: failure()
         uses: thollander/actions-comment-pull-request@v2

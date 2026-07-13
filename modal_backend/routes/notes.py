@@ -54,7 +54,7 @@ async def get_notes(
     Если передано `'active'` - возвращается список активных модалок
     Если передано `'archived'` - возвращается список архивированных модалок
 
-    `type_id` - вернет все модалки конкретного типа по type_id типа
+    `type_id` - вернет все модалки конкретного типа по type_id
 
     `groups_id` - вернет все модалки с конкретным groups_id
 
@@ -99,10 +99,15 @@ async def create_note_info(
     """
     Создает новую модалку.
 
+    Тип - простое информационное сообщение / новость
+
+    Поле для записи: info_text
+
     Права: `["modal.note.create"]`
     """
-    NoteService.validate_note_by_type(note, db)
-    new_note = Note.create(session=db.session, **note.model_dump(), admin_id=user.get("id"), status=ModalStatus.ACTIVE)
+    new_note = Note.create(
+        session=db.session, type_id=1, **note.model_dump(), admin_id=user.get("id"), status=ModalStatus.ACTIVE
+    )
     return NoteInfoGet.model_validate(new_note)
 
 
@@ -113,10 +118,15 @@ async def create_note_rating(
     """
     Создает новую модалку.
 
+    Тип модалки - оценка (рейтинг от 1 до 5)
+
+    Поле для записи: rating_max
+
     Права: `["modal.note.create"]`
     """
-    NoteService.validate_note_by_type(note, db)
-    new_note = Note.create(session=db.session, **note.model_dump(), admin_id=user.get("id"), status=ModalStatus.ACTIVE)
+    new_note = Note.create(
+        session=db.session, type_id=2, **note.model_dump(), admin_id=user.get("id"), status=ModalStatus.ACTIVE
+    )
     return NoteRatingGet.model_validate(new_note)
 
 
@@ -127,10 +137,15 @@ async def create_note_text(
     """
     Создает новую модалку.
 
+    Тип модалки - ввод произвольного текста
+
+    Поля для записи: text и max_length (максимальная длина произвольного текста)
+
     Права: `["modal.note.create"]`
     """
-    NoteService.validate_note_by_type(note, db)
-    new_note = Note.create(session=db.session, **note.model_dump(), admin_id=user.get("id"), status=ModalStatus.ACTIVE)
+    new_note = Note.create(
+        session=db.session, type_id=3, **note.model_dump(), admin_id=user.get("id"), status=ModalStatus.ACTIVE
+    )
     return NoteTextGet.model_validate(new_note)
 
 
@@ -141,10 +156,15 @@ async def create_note_choice(
     """
     Создает новую модалку.
 
+    Тип модалки - выбор одного или нескольких вариантов ответа
+
+    Поля для записи: choice_options (пример [{"id": 1, "text": "текст"}, ...]) и is_multiple (bool, множественный ли выбор)
+
     Права: `["modal.note.create"]`
     """
-    NoteService.validate_note_by_type(note, db)
-    new_note = Note.create(session=db.session, **note.model_dump(), admin_id=user.get("id"), status=ModalStatus.ACTIVE)
+    new_note = Note.create(
+        session=db.session, type_id=4, **note.model_dump(), admin_id=user.get("id"), status=ModalStatus.ACTIVE
+    )
     return NoteChoiceGet.model_validate(new_note)
 
 
@@ -155,8 +175,13 @@ async def create_note_images(
     """
     Создает новую модалку.
 
+    Тип модалки - сторис
+
+    Поле для записи: images (пример ["url1","url2"])
+
     Права: `["modal.note.create"]`
     """
-    NoteService.validate_note_by_type(note, db)
-    new_note = Note.create(session=db.session, **note.model_dump(), admin_id=user.get("id"), status=ModalStatus.ACTIVE)
+    new_note = Note.create(
+        session=db.session, type_id=5, **note.model_dump(), admin_id=user.get("id"), status=ModalStatus.ACTIVE
+    )
     return NoteImageGet.model_validate(new_note)

@@ -79,7 +79,6 @@ class NoteImageGet(NotificationGet):  # type_id=5
 
 
 class NotificationPost(Base):
-    type_id: int
     header: str
     group_ids: list[int] | None = None
     service_ids: list[int] | None = None

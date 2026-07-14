@@ -1,7 +1,9 @@
+from datetime import datetime
+
 from requests import Session
 
-from modal_backend.exceptions import AlreadyExists, ObjectNotFound
-from modal_backend.models.db import Group, Note, NoteType, Service
+from modal_backend.exceptions import AlreadyExists, ForbiddenAction, ObjectNotFound
+from modal_backend.models.db import Group, ModalStatus, Note, NoteType, Service
 from modal_backend.schemas.base import StatusResponseModel
 from modal_backend.schemas.models import GroupPost, NoteTypePost, ServicePost
 
@@ -41,22 +43,26 @@ class NoteService:
 
         return notes
 
-<<<<<<< HEAD
-=======
-    @staticmethod
-    def validate_note_by_type(note: dict, db: Session):
-        type_id = note.type_id
-        note_type = NoteType.query(session=db.session).filter(NoteType.type_id == type_id).one_or_none()
-        if note_type is None:
-            raise ObjectNotFound(NoteType, type_id)
-
     @classmethod
-    async def create_note(cls, db: Session, note: NotificationPost, admin_id: int) -> Note:
-        cls.validate_note_by_type(note, db)
-        new_note = Note.create(session=db.session, **note, admin_id=admin_id, status=ModalStatus.ACTIVE)
-        return new_note
+    async def update_status(cls, db: Session, id: int) -> Note:
+        note = Note.get(session=db.session, id=id)
+        group_ids = note.group_ids
+        for group_id in group_ids:
+            Group.get(session=db.session, id=group_id)
+        service_ids = note.service_ids
+        for service_id in service_ids:
+            Service.get(session=db.session, id=service_id)
+        end_ts = note.end_ts
+        time = datetime.utcnow()
+        if note.is_always == False and time >= end_ts:
+            raise ForbiddenAction(Note)
+        else:
+            if note.status == ModalStatus.ACTIVE:
+                updated_note = Note.update(id=id, session=db.session, status=ModalStatus.ARCHIVED)
+            else:
+                updated_note = Note.update(id=id, session=db.session, status=ModalStatus.ACTIVE)
+            return updated_note
 
->>>>>>> 68f174a (fixes)
 
 class NoteTypeService:
     """

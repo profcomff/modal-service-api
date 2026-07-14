@@ -188,17 +188,17 @@ async def create_note_images(
     return NoteImageGet.model_validate(new_note)
 
 
-@note.patch("/{id}/archive", response_model=NoteStatus)
+@note.patch("/{id}/status", response_model=NoteStatus)
 async def update_note_status(id: int, user=Depends(UnionAuth(scopes=["modal.note.patch"]))) -> NoteStatus:
     """
-    Архивирует модалку
+    Архивирует модалку, если она активна
+
+    Возвращает модалку в активное состояние, если она в архиве
 
     Права: `["modal.note.patch"]`
 
     Исключение **ObjectNotFound**, если `id` не найден
 
-    Исключение **AlreadyExists**, если модалка уже архивирована
     """
-    Note.get(session=db.session, id=id)
-    updated_note = Note.update(id=id, session=db.session, status=ModalStatus.ARCHIVED)
+    updated_note = await NoteService.update_status(db, id=id)
     return NoteStatus.model_validate(updated_note)

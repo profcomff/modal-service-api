@@ -51,7 +51,7 @@ class NoteTypeService:
     async def create_note_type(cls, db: Session, note_type: NoteTypePost) -> NoteType:
         data = note_type.model_dump()
         type_id = data.get("type_id")
-        note_types = NoteType.query(session=db.session).filter(NoteType.type_id == type_id).first()
+        note_types = NoteType.query(session=db.session, with_deleted=True).filter(NoteType.type_id == type_id).first()
         if note_types:
             raise AlreadyExists(NoteType, type_id)
         new_note_type = NoteType.create(session=db.session, **data)

@@ -1,4 +1,3 @@
-# Тут импорты
 from functools import lru_cache
 from pathlib import Path
 
@@ -8,19 +7,20 @@ from alembic.config import Config as AlembicConfig
 from fastapi.testclient import TestClient
 from pytest import MonkeyPatch
 from sqlalchemy import create_engine
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import sessionmaker
 from testcontainers.postgres import PostgresContainer
 
+from modal_backend.models.db import NoteType
 from modal_backend.settings import Settings
 
 
 class PostgresConfig:
     """Дата-класс со значениями для контейнера с тестовой БД и для alembic-миграции."""
 
-    container_name: str = "modal-service-api_test"
+    container_name: str = "modal_backend-test"
     username: str = "postgres"
     host: str = "localhost"
-    external_port: int = 5432
+    external_port: int = 5433
     image: str = "postgres:15"
     host_auth_method: str = "trust"
     alembic_ini: str = Path(__file__).resolve().parent.parent / "alembic.ini"
@@ -48,7 +48,7 @@ def get_settings_mock(session_mp):
         test_settings.DB_DSN = PostgresConfig.get_url()
         return test_settings
 
-    dsn_mock = session_mp.setattr(name="modal_backend.settings.get_settings", value=get_test_settings)
+    dsn_mock = session_mp.setattr("modal_backend.settings.get_settings", get_test_settings)
     return dsn_mock
 
 
@@ -68,11 +68,12 @@ def db_container(get_settings_mock):
             image=PostgresConfig.image, username=PostgresConfig.username, dbname=PostgresConfig.container_name
         )
         .with_bind_ports(5432, PostgresConfig.external_port)
-        .with_env("POSTGRES_HOST_AUTH_METHOD", PostgresConfig.ham)
+        .with_env("POSTGRES_HOST_AUTH_METHOD", PostgresConfig.host_auth_method)
         .with_name(PostgresConfig.container_name)
     )
     container.start()
-    cfg = AlembicConfig(str(PostgresConfig.alembic_ini.resolve()))
+    alembic_ini = PostgresConfig.alembic_ini
+    cfg = AlembicConfig(str(alembic_ini.resolve()))
     cfg.set_main_option("script_location", "%(here)s/migrations")
     command.upgrade(cfg, "head")
     try:
@@ -83,7 +84,7 @@ def db_container(get_settings_mock):
 
 @pytest.fixture(scope="session")
 def engine(db_container):
-    """Фикстура настройки пула соединений к БД"""
+    """Фикстура настройки пула соединений к БД."""
     engine = create_engine(str(db_container), pool_pre_ping=True)
     yield engine
     engine.dispose()
@@ -91,24 +92,76 @@ def engine(db_container):
 
 @pytest.fixture()
 def dbsession(engine):
-    """Фикстура настройки Session для работы с БД в тестах, реализующая паттерн 'Транзакционный откат'"""
-    # берем соединение из пула
-    connection = engine.connect()
-    # начинаем внешнюю транзакцию(на уровне соедниения)
-    transaction = connection.begin()
-    # создаём сессю на основе взятого из пула соединения
-    session = Session(bind=connection)
+    """Фикстура настройки Session для работы с БД в тестах."""
+    TestingLocalSession = sessionmaker(bind=engine)
+    session = TestingLocalSession()
     yield session
-    # закрываем сессию
     session.close()
-    # откатываем внешнюю транзакцию, все savepoint-ы откатываются, БД чиста
-    transaction.rollback()
-    # возвращаем соединение в пул
-    connection.close()
 
 
-@pytest.fixture
-def client(mocker, get_app_with_test_settings):
+@pytest.fixture()
+def authlib_user_data():
+    """
+    Данные о пользователе, возвращаемые сервисом auth.
+    """
+    return {
+        "session_scopes": [{"id": 0, "name": "string", "comment": "string"}],
+        "user_scopes": [{"id": 0, "name": "string", "comment": "string"}],
+        "indirect_groups": [{"id": 0, "name": "string", "parent_id": 0}],
+        "groups": [{"id": 0, "name": "string", "parent_id": 0}],
+        "id": 0,
+        "email": "string",
+        "userdata": [
+            {"category": "Личная информация", "param": "Полное имя", "value": "Тестовый Тест"},
+        ],
+    }
+
+
+@pytest.fixture()
+def authlib_mock(mocker):
+    auth_mock = mocker.patch("auth_lib.fastapi.UnionAuth.__call__", autospec=True)
+    return auth_mock
+
+
+@pytest.fixture()
+def user_mock(authlib_mock, authlib_user_data):
+    authlib_mock.return_value = authlib_user_data
+    return authlib_mock
+
+
+@pytest.fixture()
+def client(get_app_with_test_settings, user_mock):
     app = get_app_with_test_settings
     client = TestClient(app)
     return client
+
+
+def create_note_type(name: str, type_id: int, is_deleted: bool = False):
+    """Вспомогательная функция-мини-фабрика для создания разных типов модалок"""
+    return NoteType(name=name, type_id=type_id, is_deleted=is_deleted)
+
+
+@pytest.fixture()
+def note_types(dbsession):
+    """Создает три разных типа модалок, один тип помечен на удаление."""
+    note_type_data = [
+        (
+            "Name 1",
+            1,
+        ),
+        (
+            "Name 2",
+            2,
+        ),
+        ("Name 3", 3, True),
+    ]
+
+    note_types = [create_note_type(*note_type) for note_type in note_type_data]
+
+    for note_type in note_types:
+        dbsession.add(note_type)
+    dbsession.commit()
+    yield note_types
+    for note_type in note_types:
+        dbsession.delete(note_type)
+    dbsession.commit()

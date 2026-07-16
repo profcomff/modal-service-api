@@ -137,7 +137,7 @@ def client(get_app_with_test_settings, user_mock):
 
 
 def create_note_type(name: str, type_id: int, is_deleted: bool = False):
-    """Вспомогательная функция-мини-фабрика для создания разных типов модалок"""
+    """Вспомогательная функция-мини-фабрика для создания разных типов модалок в фикстуре note_types."""
     return NoteType(name=name, type_id=type_id, is_deleted=is_deleted)
 
 

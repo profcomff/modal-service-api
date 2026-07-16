@@ -18,7 +18,6 @@ settings = get_settings()
 def test_get_notification_type(client, note_types, status_code):
     response = client.get(url)
     assert response.status_code == status_code
-    pytest.set_trace()
     type_ids_of_note_types = [note_type.type_id for note_type in note_types]
     for note_type in response.json():
         assert note_type.get("type_id") in type_ids_of_note_types

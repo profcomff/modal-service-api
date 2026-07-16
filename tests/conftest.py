@@ -136,14 +136,14 @@ def client(get_app_with_test_settings, user_mock):
     return client
 
 
-def create_note_type(name: str, type_id: int, is_deleted: bool = False):
+def create_note_type(name: str, type_id: int):
     """Вспомогательная функция-мини-фабрика для создания разных типов модалок в фикстуре note_types."""
-    return NoteType(name=name, type_id=type_id, is_deleted=is_deleted)
+    return NoteType(name=name, type_id=type_id)
 
 
 @pytest.fixture()
 def note_types(dbsession):
-    """Создает три разных типа модалок, один тип помечен на удаление."""
+    """Создает три разных типа модалок."""
     note_type_data = [
         (
             "Name 1",
@@ -153,7 +153,7 @@ def note_types(dbsession):
             "Name 2",
             2,
         ),
-        ("Name 3", 3, True),
+        ("Name 3", 3),
     ]
 
     note_types = [create_note_type(*note_type) for note_type in note_type_data]

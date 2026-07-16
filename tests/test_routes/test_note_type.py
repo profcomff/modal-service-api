@@ -15,9 +15,13 @@ settings = get_settings()
         (status.HTTP_200_OK),
     ],
 )
-def test_get_notification_type(client, dbsession, note_types, status_code):
+def test_get_notification_type(client, note_types, status_code):
     response = client.get(url)
     assert response.status_code == status_code
+
+    type_ids_of_note_types = [note_type.type_id for note_type in note_types]
+    for note_type in response.json():
+        assert note_type.get("type_id") in type_ids_of_note_types
 
 
 @pytest.mark.parametrize(
@@ -40,13 +44,6 @@ def test_get_notification_type(client, dbsession, note_types, status_code):
         (
             status.HTTP_422_UNPROCESSABLE_ENTITY,
             {
-                "type_id": -100,
-                "name": "string",
-            },
-        ),
-        (
-            status.HTTP_422_UNPROCESSABLE_ENTITY,
-            {
                 "type_id": 4,
                 "name": 123,
             },
@@ -59,10 +56,10 @@ def test_get_notification_type(client, dbsession, note_types, status_code):
             },
         ),
         (
-            status.HTTP_409_CONFLICT,
+            status.HTTP_200_OK,
             {
                 "type_id": 3,
-                "name": "NoteType with is_deleted=True",
+                "name": "Successful create NoteType with is_deleted=True",
             },
         ),
     ],

@@ -1,0 +1,17 @@
+FROM python:3.11-slim
+ARG APP_VERSION=dev
+ENV APP_VERSION=${APP_VERSION}
+ENV APP_NAME=modal_backend
+ENV APP_MODULE=${APP_NAME}.routes.base:app
+
+COPY ./requirements.txt ./requirements.dev.txt /${APP_NAME}/
+WORKDIR /${APP_NAME}/
+RUN ["/bin/sh", "-c", "pip install -U -r requirements.txt -r requirements.dev.txt"]
+CMD ["-l", "-v"]
+ENTRYPOINT ["pytest"]
+
+COPY ./pyproject.toml /${APP_NAME}/
+COPY ./alembic.ini /${APP_NAME}/
+COPY ./migrations /${APP_NAME}/migrations
+COPY ./${APP_NAME} /${APP_NAME}/${APP_NAME}
+COPY ./tests /${APP_NAME}/tests/

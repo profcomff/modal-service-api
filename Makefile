@@ -23,3 +23,17 @@ db:
 
 migrate:
 	source ./venv/bin/activate && alembic upgrade head
+
+pytest-container-build:
+	 docker build -f Dockerfile.test -t pytest-container .
+
+pytest-container-run:
+	 docker run -it \
+	 -v /var/run/docker.sock:/var/run/docker.sock \
+	 --rm \
+	 --add-host host.docker.internal:host-gateway \
+	 -e TESTCONTAINERS_HOST_OVERRIDE=host.docker.internal \
+	 --network host \
+	 pytest-container
+
+

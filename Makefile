@@ -36,4 +36,16 @@ pytest-container-run:
 	 --network host \
 	 pytest-container
 
+pytest-rerun:
+	docker build -f Dockerfile.test -t pytest-container . \
+	&& \
+	docker run -it \
+	-v /var/run/docker.sock:/var/run/docker.sock \
+	--rm \
+	--add-host host.docker.internal:host-gateway \
+	-e TESTCONTAINERS_HOST_OVERRIDE=host.docker.internal \
+	--network host \
+	pytest-container
+
+
 

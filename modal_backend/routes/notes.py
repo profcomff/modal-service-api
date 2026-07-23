@@ -193,12 +193,19 @@ async def update_note_status(id: int, user=Depends(UnionAuth(scopes=["modal.note
     """
     Архивирует модалку, если она активна
 
-    Возвращает модалку в активное состояние, если она в архиве
+    Если модалка в архиве, возвращает её в активное состояние, убирая из `group_ids` и `service_ids` ненайденные группы и сервисы
 
     Права: `["modal.note.patch"]`
 
     Исключение **ObjectNotFound**, если `id` не найден
 
+    Исключения, которые могут возникнуть при возврате в активное состояние:
+
+    Исключение **ForbiddenAction**, если ни одна группа из списка `group_ids` не найдена
+
+    Исключение **ForbiddenAction**, если ни один сервис из списка `service_ids` не найден
+
+    Исключение **ForbiddenAction**, если время модалки истекло
     """
     updated_note = await NoteService.update_status(db, id=id)
     return NoteStatus.model_validate(updated_note)

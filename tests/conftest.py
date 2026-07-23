@@ -10,6 +10,7 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from testcontainers.postgres import PostgresContainer
 
+
 from modal_backend.settings import Settings
 
 
@@ -133,3 +134,52 @@ def client(get_app_with_test_settings, user_mock):
     app = get_app_with_test_settings
     client = TestClient(app)
     return client
+<<<<<<< HEAD
+=======
+
+
+def create_note_type(name: str, type_id: int):
+    """Вспомогательная функция-мини-фабрика для создания разных типов модалок в фикстуре note_types."""
+    return NoteType(name=name, type_id=type_id)
+
+
+@pytest.fixture()
+def note_types(dbsession):
+    """Создает три разных типа модалок."""
+    note_type_data = [
+        (
+            "Name 1",
+            1,
+        ),
+        (
+            "Name 2",
+            2,
+        ),
+        ("Name 3", 3),
+    ]
+
+    note_types = [create_note_type(*note_type) for note_type in note_type_data]
+
+    for note_type in note_types:
+        dbsession.add(note_type)
+    dbsession.commit()
+    yield note_types
+    for note_type in note_types:
+        dbsession.delete(note_type)
+    dbsession.commit()
+
+def create_group(group_id: int, name: str) -> Group:
+    return Group(group_id=group_id, name=name)
+
+@pytest.fixture()
+def groups(dbsession):
+    group_data = [(1, "Group_1"), (2, "Group_2"), (3, "Group_3")]   
+    groupes = [create_group(*group) for group in group_data]
+    for group in groupes:
+        dbsession.add(group)
+    dbsession.commit()
+    yield groupes
+    for group in groupes:
+        dbsession.delete(group)
+    dbsession.commit()
+>>>>>>> 66a98ec (Добавлены тесты для routes/group.py)

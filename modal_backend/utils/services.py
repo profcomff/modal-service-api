@@ -53,7 +53,7 @@ class NoteService:
             group_ids = note.group_ids
             new_group_ids = []
             for group_id in group_ids:
-                group = db.session.query(Group).filter(Group.id == group_id, Group.is_deleted == False).first()
+                group = db.session.query(Group).filter(Group.id == group_id, Group.is_deleted == False).one_or_none()
                 if group is not None:
                     new_group_ids.append(group.id)
             if new_group_ids == []:
@@ -63,7 +63,9 @@ class NoteService:
             new_service_ids = []
             for service_id in service_ids:
                 service = (
-                    db.session.query(Service).filter(Service.id == service_id, Service.is_deleted == False).first()
+                    db.session.query(Service)
+                    .filter(Service.id == service_id, Service.is_deleted == False)
+                    .one_or_none()
                 )
                 if service is not None:
                     new_service_ids.append(service.id)
@@ -72,17 +74,16 @@ class NoteService:
 
             end_ts = note.end_ts
             time = datetime.now(timezone.utc).replace(tzinfo=None)
-            if note.is_always == False and time >= end_ts:
+            if note.is_always == False or time >= end_ts:
                 raise ForbiddenAction(Note)
-            else:
-                updated_note = Note.update(
-                    id=id,
-                    session=db.session,
-                    group_ids=new_group_ids,
-                    service_ids=new_service_ids,
-                    status=ModalStatus.ACTIVE,
-                )
-                return updated_note
+            updated_note = Note.update(
+                id=id,
+                session=db.session,
+                group_ids=new_group_ids,
+                service_ids=new_service_ids,
+                status=ModalStatus.ACTIVE,
+            )
+            return updated_note
 
 
 class NoteTypeService:

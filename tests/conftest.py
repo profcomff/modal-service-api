@@ -11,6 +11,14 @@ from sqlalchemy.orm import sessionmaker
 from testcontainers.postgres import PostgresContainer
 
 
+from modal_backend.models.db import Group, ModalStatus, Note, Service
+from modal_backend.schemas.models import (
+    NoteChoicePost,
+    NoteImagePost,
+    NoteInfoPost,
+    NoteRatingPost,
+    NoteTextPost,
+)
 from modal_backend.settings import Settings
 
 
@@ -147,15 +155,11 @@ def create_note_type(name: str, type_id: int):
 def note_types(dbsession):
     """Создает три разных типа модалок."""
     note_type_data = [
-        (
-            "Name 1",
-            1,
-        ),
-        (
-            "Name 2",
-            2,
-        ),
-        ("Name 3", 3),
+        ("info", 1),
+        ("rating", 2),
+        ("text", 3),
+        ("choice", 4),
+        ("image", 5),
     ]
 
     note_types = [create_note_type(*note_type) for note_type in note_type_data]
@@ -168,12 +172,16 @@ def note_types(dbsession):
         dbsession.delete(note_type)
     dbsession.commit()
 
+
 def create_group(group_id: int, name: str) -> Group:
+    """Вспомогательная функция-мини-фабрика для создания разных групп в фикстуре groups."""
     return Group(group_id=group_id, name=name)
+
 
 @pytest.fixture()
 def groups(dbsession):
-    group_data = [(1, "Group_1"), (2, "Group_2"), (3, "Group_3")]   
+    """Создает три группы."""
+    group_data = [(1, "Group_1"), (2, "Group_2"), (3, "Group_3")]
     groupes = [create_group(*group) for group in group_data]
     for group in groupes:
         dbsession.add(group)
@@ -182,4 +190,106 @@ def groups(dbsession):
     for group in groupes:
         dbsession.delete(group)
     dbsession.commit()
->>>>>>> 66a98ec (Добавлены тесты для routes/group.py)
+
+
+def create_service(service_id: int, name: str) -> Service:
+    """Вспомогательная функция-мини-фабрика для создания разных сервисов в фикстуре services."""
+    return Service(service_id=service_id, name=name)
+
+
+@pytest.fixture()
+def services(dbsession):
+    """Создает три сервиса."""
+    service_data = [(1, "Service_1"), (2, "Service_2"), (3, "Service_3")]
+    services = [create_service(*service) for service in service_data]
+    for service in services:
+        dbsession.add(service)
+    dbsession.commit()
+    yield services
+    for service in services:
+        dbsession.delete(service)
+    dbsession.commit()
+
+def create_note(
+    type_id: int,
+    header: str,
+    schema: NoteChoicePost | NoteImagePost | NoteInfoPost | NoteRatingPost | NoteTextPost,
+    admin_id: int,
+    status: ModalStatus,
+    group_ids: list[int],
+    service_ids: list[int],
+):
+    return Note(
+        type_id=type_id,
+        header=header,
+        **schema.model_dump(),
+        admim_id=admin_id,
+        status=status,
+        group_ids=group_ids,
+        service_ids=service_ids,
+    )
+
+
+@pytest.fixture()
+def notes(
+    dbsession,
+    note_types,
+    groupes,
+    services,
+    authlib_user_data,
+):
+    note_data = [
+        {
+            "type_id": note_types[0].type_id,
+            "header": "header_1",
+            "schema": NoteInfoPost(),
+            "admin_id": authlib_user_data.get("id"),
+            "status": ModalStatus.ACTIVE,
+            "group_ids": [group.type_id for group in groupes],
+            "servece_ids": [service.type_id for service in services],
+        },
+        {
+            "type_id": note_types[1].type_id,
+            "header": "header_2",
+            "schema": NoteRatingPost(),
+            "admin_id": authlib_user_data.get("id"),
+            "status": ModalStatus.ACTIVE,
+            "group_ids": [group.type_id for group in groupes],
+            "servece_ids": [service.type_id for service in services],
+        },
+        {
+            "type_id": note_types[2].type_id,
+            "header": "header_3",
+            "schema": NoteTextPost(),
+            "admin_id": authlib_user_data.get("id"),
+            "status": ModalStatus.ACTIVE,
+            "group_ids": [group.type_id for group in groupes],
+            "servece_ids": [service.type_id for service in services],
+        },
+        {
+            "type_id": note_types[3].type_id,
+            "header": "header_4",
+            "schema": NoteChoicePost(),
+            "admin_id": authlib_user_data.get("id"),
+            "status": ModalStatus.ACTIVE,
+            "group_ids": [group.type_id for group in groupes],
+            "servece_ids": [service.type_id for service in services],
+        },
+        {
+            "type_id": note_types[4].type_id,
+            "header": "header_5",
+            "schema": NoteImagePost(),
+            "admin_id": authlib_user_data.get("id"),
+            "status": ModalStatus.ACTIVE,
+            "group_ids": [group.type_id for group in groupes],
+            "servece_ids": [service.type_id for service in services],
+        },
+    ]
+    notes = [create_note(**note) for note in note_data]
+    for note in notes:
+        dbsession.add(note)
+    dbsession.commit()
+    yield notes
+    for note in notes:
+        dbsession.delete(note)
+    dbsession.commit()

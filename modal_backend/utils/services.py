@@ -74,7 +74,7 @@ class NoteService:
 
             end_ts = note.end_ts
             time = datetime.now(timezone.utc).replace(tzinfo=None)
-            if note.is_always == False or time >= end_ts:
+            if note.is_always == False and time >= end_ts:
                 raise ForbiddenAction(Note)
             updated_note = Note.update(
                 id=id,

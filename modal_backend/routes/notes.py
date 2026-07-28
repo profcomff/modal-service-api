@@ -23,6 +23,7 @@ from modal_backend.schemas.models import (
 )
 from modal_backend.settings import Settings, get_settings
 from modal_backend.utils.services import NoteService
+from modal_backend.schemas.base import StatusResponseModel
 
 settings: Settings = get_settings()
 note = APIRouter(prefix="/notification", tags=["Note"])
@@ -209,3 +210,17 @@ async def update_note_status(id: int, user=Depends(UnionAuth(scopes=["modal.note
     """
     updated_note = await NoteService.update_status(db, id=id)
     return NoteStatus.model_validate(updated_note)
+
+
+@note.delete("/{id}", response_model=StatusResponseModel)
+async def delete_note(id: int, user=Depends(UnionAuth(scopes=["modal.note.delete"]))) -> StatusResponseModel:
+    """
+    Удаляет модалку по id
+
+    Права: `["modal.note.delete"]`
+    
+    Исключение **ObjectNotFound**, если `id` не найден
+    """
+    Note.get(session=db.session, id=id)
+    Note.delete(session=db.session, id=id)
+    return StatusResponseModel(status="success", message="Модалка успешно удалена", ru="Модалка успешно удалена")

@@ -34,13 +34,13 @@ async def get_notes(
     type_id: int = Query(None),
     groups_id: list[int] = Query(None),
     services_id: list[int] = Query(None),
-    status: str = Query(
+    status: ModalStatus | None = Query(
         enum=["active", "archived"],
         default=None,
     ),
     asc_order: bool = False,
-    limit: int = 10,
-    offset: int = 0,
+    limit: int | None = Query(10, ge=0, description="Лимит записией"),
+    offset: int | None = Query(0, ge=0, description="Смещение записей на N+offset, где N - первая запись"),
     user=Depends(UnionAuth()),
 ) -> list[NoteGet]:
     """

@@ -1,4 +1,5 @@
 from functools import lru_cache
+from datetime import datetime, timedelta
 from pathlib import Path
 
 import pytest
@@ -11,7 +12,6 @@ from sqlalchemy.orm import sessionmaker
 from testcontainers.postgres import PostgresContainer
 
 
-from modal_backend.models.db import Group, ModalStatus, Note, Service
 from modal_backend.schemas.models import (
     NoteChoicePost,
     NoteImagePost,
@@ -19,6 +19,7 @@ from modal_backend.schemas.models import (
     NoteRatingPost,
     NoteTextPost,
 )
+from modal_backend.models.db import Group, Service, ModalStatus, Note
 from modal_backend.settings import Settings
 
 
@@ -155,10 +156,10 @@ def create_note_type(name: str, type_id: int):
 def note_types(dbsession):
     """Создает три разных типа модалок."""
     note_type_data = [
-        ("info", 1),
-        ("rating", 2),
+        ("info",1),
+        ("rating",2),
         ("text", 3),
-        ("choice", 4),
+        ("choice", 4), 
         ("image", 5),
     ]
 
@@ -172,16 +173,14 @@ def note_types(dbsession):
         dbsession.delete(note_type)
     dbsession.commit()
 
-
 def create_group(group_id: int, name: str) -> Group:
     """Вспомогательная функция-мини-фабрика для создания разных групп в фикстуре groups."""
     return Group(group_id=group_id, name=name)
 
-
 @pytest.fixture()
 def groups(dbsession):
     """Создает три группы."""
-    group_data = [(1, "Group_1"), (2, "Group_2"), (3, "Group_3")]
+    group_data = [(1, "Group_1"), (2, "Group_2"), (3, "Group_3")]   
     groupes = [create_group(*group) for group in group_data]
     for group in groupes:
         dbsession.add(group)
@@ -196,11 +195,10 @@ def create_service(service_id: int, name: str) -> Service:
     """Вспомогательная функция-мини-фабрика для создания разных сервисов в фикстуре services."""
     return Service(service_id=service_id, name=name)
 
-
 @pytest.fixture()
 def services(dbsession):
     """Создает три сервиса."""
-    service_data = [(1, "Service_1"), (2, "Service_2"), (3, "Service_3")]
+    service_data = [(1, "Service_1"), (2, "Service_2"), (3, "Service_3")]   
     services = [create_service(*service) for service in service_data]
     for service in services:
         dbsession.add(service)
@@ -210,82 +208,77 @@ def services(dbsession):
         dbsession.delete(service)
     dbsession.commit()
 
-def create_note(
-    type_id: int,
-    header: str,
-    schema: NoteChoicePost | NoteImagePost | NoteInfoPost | NoteRatingPost | NoteTextPost,
-    admin_id: int,
-    status: ModalStatus,
-    group_ids: list[int],
-    service_ids: list[int],
-):
-    return Note(
-        type_id=type_id,
-        header=header,
-        **schema.model_dump(),
-        admim_id=admin_id,
-        status=status,
-        group_ids=group_ids,
-        service_ids=service_ids,
-    )
+
+def create_note(type_id: int, 
+                schema: NoteChoicePost |
+                        NoteImagePost |
+                        NoteInfoPost |
+                        NoteRatingPost | 
+                        NoteTextPost,
+                admin_id: int, 
+                status: ModalStatus, 
+                ):
+    return Note(type_id=type_id,
+                **schema.model_dump(),
+                admin_id=admin_id,
+                status=status,
+                )
 
 
 @pytest.fixture()
-def notes(
-    dbsession,
-    note_types,
-    groupes,
-    services,
-    authlib_user_data,
-):
+def notes(dbsession, note_types, groups, services, authlib_user_data,):
     note_data = [
-        {
-            "type_id": note_types[0].type_id,
-            "header": "header_1",
-            "schema": NoteInfoPost(),
-            "admin_id": authlib_user_data.get("id"),
-            "status": ModalStatus.ACTIVE,
-            "group_ids": [group.type_id for group in groupes],
-            "servece_ids": [service.type_id for service in services],
-        },
-        {
-            "type_id": note_types[1].type_id,
-            "header": "header_2",
-            "schema": NoteRatingPost(),
-            "admin_id": authlib_user_data.get("id"),
-            "status": ModalStatus.ACTIVE,
-            "group_ids": [group.type_id for group in groupes],
-            "servece_ids": [service.type_id for service in services],
-        },
-        {
-            "type_id": note_types[2].type_id,
-            "header": "header_3",
-            "schema": NoteTextPost(),
-            "admin_id": authlib_user_data.get("id"),
-            "status": ModalStatus.ACTIVE,
-            "group_ids": [group.type_id for group in groupes],
-            "servece_ids": [service.type_id for service in services],
-        },
-        {
-            "type_id": note_types[3].type_id,
-            "header": "header_4",
-            "schema": NoteChoicePost(),
-            "admin_id": authlib_user_data.get("id"),
-            "status": ModalStatus.ACTIVE,
-            "group_ids": [group.type_id for group in groupes],
-            "servece_ids": [service.type_id for service in services],
-        },
-        {
-            "type_id": note_types[4].type_id,
-            "header": "header_5",
-            "schema": NoteImagePost(),
-            "admin_id": authlib_user_data.get("id"),
-            "status": ModalStatus.ACTIVE,
-            "group_ids": [group.type_id for group in groupes],
-            "servece_ids": [service.type_id for service in services],
-        },
-    ]
-    notes = [create_note(**note) for note in note_data]
+            {"type_id" : note_types[0].type_id, 
+             "schema" : NoteInfoPost(header="header_1", 
+                                     is_always=False, 
+                                     frequency=10,
+                                     group_ids=[group.group_id for group in groups if group.group_id == 3],
+                                     service_ids=[service.service_id for service in services if service.service_id == 3]),
+             "admin_id" : authlib_user_data.get("id"),
+             "status" : ModalStatus.ACTIVE,
+             },
+            {"type_id" : note_types[1].type_id, 
+             "schema" : NoteRatingPost(header="header_2",
+                                       is_always=False,
+                                       frequency=10,
+                                       group_ids=[group.group_id for group in groups if group.group_id < 3],
+                                       service_ids=[service.service_id for service in services if service.service_id < 3]),
+             "admin_id" : authlib_user_data.get("id"),
+             "status" : ModalStatus.ACTIVE,
+            },
+            {"type_id" : note_types[2].type_id, 
+             "schema" : NoteTextPost(header="header_3",
+                                     is_always=False,
+                                     frequency=10,
+                                     group_ids=[group.group_id for group in groups if group.group_id == 3],
+                                     service_ids=[service.service_id for service in services if service.service_id == 3]),
+             "admin_id" : authlib_user_data.get("id"),
+             "status" : ModalStatus.ACTIVE,
+            },
+            {"type_id" : note_types[3].type_id, 
+             "schema" : NoteChoicePost(header="header_4",
+                                       is_always=False,
+                                       frequency=10,
+                                       group_ids=[group.group_id for group in groups if group.group_id < 3],
+                                       service_ids=[service.service_id for service in services if service.service_id < 3]),
+             "admin_id" : authlib_user_data.get("id"),
+             "status" : ModalStatus.ARCHIVED,
+            },
+            {"type_id" : note_types[4].type_id, 
+             "schema" : NoteImagePost(header="header_5",
+                                      is_always=False,
+                                      frequency=10,
+                                      group_ids=[group.group_id for group in groups if group.group_id == 3],
+                                      service_ids=[service.service_id for service in services if service.service_id == 3]),
+             "admin_id" : authlib_user_data.get("id"),
+             "status" : ModalStatus.ARCHIVED,
+             }
+            ]
+    for offset, d in enumerate(note_data):
+        d["schema"].start_ts = datetime.now() + offset * timedelta(hours=1)
+        d["schema"].end_ts = datetime.now() + offset * timedelta(hours=1)
+
+    notes = [create_note(**note) for note in note_data]    
     for note in notes:
         dbsession.add(note)
     dbsession.commit()
@@ -293,3 +286,4 @@ def notes(
     for note in notes:
         dbsession.delete(note)
     dbsession.commit()
+

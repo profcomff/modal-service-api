@@ -6,6 +6,7 @@ from fastapi_sqlalchemy import db
 
 from modal_backend import settings
 from modal_backend.models.db import ModalStatus, Note
+from modal_backend.schemas.base import StatusResponseModel
 from modal_backend.schemas.models import (
     NoteChoiceGet,
     NoteChoicePost,
@@ -23,7 +24,6 @@ from modal_backend.schemas.models import (
 )
 from modal_backend.settings import Settings, get_settings
 from modal_backend.utils.services import NoteService
-from modal_backend.schemas.base import StatusResponseModel
 
 settings: Settings = get_settings()
 note = APIRouter(prefix="/notification", tags=["Note"])
@@ -218,7 +218,7 @@ async def delete_note(id: int, user=Depends(UnionAuth(scopes=["modal.note.delete
     Удаляет модалку по id
 
     Права: `["modal.note.delete"]`
-    
+
     Исключение **ObjectNotFound**, если `id` не найден
     """
     Note.get(session=db.session, id=id)

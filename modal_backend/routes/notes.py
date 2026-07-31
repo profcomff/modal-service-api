@@ -223,4 +223,6 @@ async def delete_note(id: int, user=Depends(UnionAuth(scopes=["modal.note.delete
     """
     Note.get(session=db.session, id=id)
     Note.delete(session=db.session, id=id)
-    return StatusResponseModel(status="success", message="Модалка успешно удалена", ru="Модалка успешно удалена")
+    return StatusResponseModel(
+        status="success", message="Note has been successfully deleted", ru="Модалка успешно удалена"
+    )

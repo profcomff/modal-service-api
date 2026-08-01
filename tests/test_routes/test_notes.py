@@ -2,6 +2,7 @@ import pytest
 from starlette import status
 
 from modal_backend.models.db import Note
+from modal_backend.schemas.models import NoteChoiceGet, NoteImageGet, NoteInfoGet, NoteRatingGet, NoteTextGet
 from modal_backend.settings import get_settings
 
 url: str = "/notification"
@@ -78,6 +79,7 @@ settings = get_settings()
             None,  # offset
             0,  # len_without_confines
         ),
+        # негативные кейсы
         (  # отрицательный лимит + не валидный лимит
             status.HTTP_422_UNPROCESSABLE_CONTENT,
             None,  # type_id
@@ -243,3 +245,54 @@ def test_get_notes(
         if modal_status:
             for resp_obj in response_data:
                 assert resp_obj.get("status") == modal_status
+
+
+@pytest.mark.parametrize(
+    "status_code, note_n, type_model",
+    [
+        (
+            status.HTTP_200_OK,
+            0,
+            NoteInfoGet,
+        ),
+        (
+            status.HTTP_200_OK,
+            1,
+            NoteRatingGet,
+        ),
+        (
+            status.HTTP_200_OK,
+            2,
+            NoteTextGet,
+        ),
+        (
+            status.HTTP_200_OK,
+            3,
+            NoteChoiceGet,
+        ),
+        (
+            status.HTTP_200_OK,
+            4,
+            NoteImageGet,
+        ),
+        (
+            status.HTTP_404_NOT_FOUND,
+            -1,
+            None,
+        ),
+        (
+            status.HTTP_422_UNPROCESSABLE_CONTENT,
+            "abc",
+            None,
+        ),
+    ],
+)
+def test_get_note_by_id(client, notes, status_code, note_n, type_model):
+    notes_indexes = range(len(notes))
+    id_of_note = notes[note_n].id if note_n in notes_indexes else note_n
+    response = client.get(f"{url}/{id_of_note}")
+
+    assert response.status_code == status_code
+
+    if status_code == status.HTTP_200_OK:
+        type_model.model_validate(response.json(), extra="forbid")

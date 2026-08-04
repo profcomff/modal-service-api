@@ -325,93 +325,83 @@ def test_get_note_by_id(client, notes, status_code, note_n, type_model):
 
 
 @pytest.mark.parametrize(
-    "status_code, note_n, dict_switch_to",
+    "status_code, note_n, modal_status, deleted_group_id_flag, deleted_service_id_flag",
     [
         (
             status.HTTP_200_OK,
             0,
-            {
-                "modal_status" : ModalStatus.ARCHIVED,
-            },
+            ModalStatus.ARCHIVED,
+            False,
+            False,
         ),
         (
             status.HTTP_404_NOT_FOUND,
             -1,
-            {
-            },
+            ModalStatus.ACTIVE,
+            False,
+            False,
         ),
         (
             status.HTTP_200_OK,
             3,
-            {
-                "modal_status" : ModalStatus.ACTIVE,
-            },
+            ModalStatus.ACTIVE,
+            False,
+            False
         ),
         (
             status.HTTP_403_FORBIDDEN,
             3,
-            {
-                "modal_status" : ModalStatus.ACTIVE,
-                "deleted_service_ids" : True,
-            },
+            ModalStatus.ACTIVE,
+            True,
+            False,
         ),
         (
             status.HTTP_403_FORBIDDEN,
             3,
-            {
-                "modal_status" : ModalStatus.ACTIVE,
-                "deleted_group_ids" : True,
-            },
+            ModalStatus.ACTIVE,
+            False,
+            True,
         ),
         (# просроченная модалка
             status.HTTP_403_FORBIDDEN,
             5,
-            {
-                "modal_status" : ModalStatus.ACTIVE,
-            },
+            ModalStatus.ACTIVE,
+            False,
+            False,
         ),
         (# просроченная модалка с is_always=True
-            status.HTTP_403_FORBIDDEN,
+            status.HTTP_200_OK,
             6,
-            {
-                "modal_status" : ModalStatus.ACTIVE,
-            },
+            ModalStatus.ACTIVE,
+            False,
+            False,
         ),
 
     ]
 )
-def test_update_note_status(client, dbsession, notes, note_n, status_code, dict_switch_to):
+def test_update_note_status(client, dbsession, notes, note_n, status_code, modal_status, deleted_group_id_flag, deleted_service_id_flag):
+
     notes_indexes = range(len(notes))
     id_of_note = notes[note_n].id if note_n in notes_indexes else note_n
 
-    if note_n in notes_indexes:
-        id_of_note = notes[note_n].id
-        if dict_switch_to.get("deleted_group_ids"):
-            for group_id in notes[note_n].group_ids:
-                group = Group.query(session=dbsession).filter(Group.group_id == group_id).first()
-                dbsession.delete(group)
-            dbsession.commit()
-        if dict_switch_to.get("deleted_service_ids"):
-            for service_id in notes[note_n].service_ids:
-                service = Service.query(session=dbsession).filter(Service.service_id == service_id).first()
-                dbsession.delete(service)
-            dbsession.commit()
+    if deleted_group_id_flag:
+        for group_id in notes[note_n].group_ids:
+            group = Group.query(session=dbsession).filter(Group.id == group_id).first()
+            dbsession.delete(group)
+        dbsession.commit()
+    if deleted_service_id_flag:
+        for service_id in notes[note_n].service_ids:
+            service = Service.query(session=dbsession).filter(Service.id == service_id).first()
+            dbsession.delete(service)
+        dbsession.commit()
 
     response = client.patch(f"{url}/{id_of_note}/status")
-    response_data = response.json()
+    assert response.status_code == status_code
 
-    note = Note.query(session=dbsession).filter(Note.id == response_data.get("id")).populate_existing().first()
-    match dict_switch_to:
-        case {"modal_status" : ModalStatus.ARCHIVED}:
-            assert response.status_code == status_code
-            if status_code == status.HTTP_200_OK:
-                assert note.status == ModalStatus.ARCHIVED
-        case {"modal_status" : ModalStatus.ACTIVE}:
-            assert response.status_code == status_code
-            if status_code == status.HTTP_200_OK:
-                assert note.status == ModalStatus.ACTIVE
-        case _:
-            assert response.status_code == status_code
+    if status_code == status.HTTP_200_OK:
+        response_data = response.json()
+        note = Note.query(session=dbsession).filter(Note.id == response_data.get("id")).populate_existing().first()
+        assert note.status == modal_status
 
 
     

@@ -404,6 +404,20 @@ def test_update_note_status(client, dbsession, notes, note_n, status_code, modal
         assert note.status == modal_status
 
 
+@pytest.mark.parametrize(
+    "status_code, note_n",
+    [
+        (status.HTTP_200_OK, 0),
+        (status.HTTP_404_NOT_FOUND, -1),
+        (status.HTTP_422_UNPROCESSABLE_CONTENT, "one"),
+    ]
+)
+def test_delete_note(client, dbsession, notes, status_code, note_n):
+    note_indexes = range(len(notes))
+    id_of_note = notes[note_n].id if note_n in note_indexes else note_n
     
-    
- 
+    response = client.delete(f"{url}/{id_of_note}")
+    assert response.status_code == status_code
+    if status_code == status.HTTP_200_OK:
+        deleted_note = Note.query(session=dbsession).filter(Note.id == id_of_note).populate_existing().one_or_none
+        assert deleted_note is not None

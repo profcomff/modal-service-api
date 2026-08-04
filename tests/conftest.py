@@ -1,4 +1,4 @@
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from functools import lru_cache
 from pathlib import Path
 
@@ -182,12 +182,12 @@ def create_group(group_id: int, name: str) -> Group:
 def groups(dbsession):
     """Создает три группы."""
     group_data = [(1, "Group_1"), (2, "Group_2"), (3, "Group_3")]
-    groupes = [create_group(*group) for group in group_data]
-    for group in groupes:
+    groups = [create_group(*group) for group in group_data]
+    for group in groups:
         dbsession.add(group)
     dbsession.commit()
-    yield groupes
-    for group in groupes:
+    yield groups
+    for group in groups:
         dbsession.delete(group)
     dbsession.commit()
 
@@ -234,6 +234,7 @@ def notes(
     services,
     authlib_user_data,
 ):
+    """Создает 7 модалок: 5 с разными типами, две просроченные."""
     note_data = [
         {
             "type_id": note_types[0].type_id,
@@ -241,8 +242,8 @@ def notes(
                 header="header_1",
                 is_always=False,
                 frequency=10,
-                group_ids=[group.group_id for group in groups if group.group_id == 3],
-                service_ids=[service.service_id for service in services if service.service_id == 3],
+                group_ids=[group.id for group in groups][2:3],
+                service_ids=[service.id for service in services][2:3],
             ),
             "admin_id": authlib_user_data.get("id"),
             "status": ModalStatus.ACTIVE,
@@ -253,8 +254,8 @@ def notes(
                 header="header_2",
                 is_always=False,
                 frequency=10,
-                group_ids=[group.group_id for group in groups if group.group_id < 3],
-                service_ids=[service.service_id for service in services if service.service_id < 3],
+                group_ids=[group.id for group in groups][:2],
+                service_ids=[service.id for service in services][:2],
             ),
             "admin_id": authlib_user_data.get("id"),
             "status": ModalStatus.ACTIVE,
@@ -265,8 +266,8 @@ def notes(
                 header="header_3",
                 is_always=False,
                 frequency=10,
-                group_ids=[group.group_id for group in groups if group.group_id == 3],
-                service_ids=[service.service_id for service in services if service.service_id == 3],
+                group_ids=[group.id for group in groups][2:3],
+                service_ids=[service.id for service in services][2:3],
             ),
             "admin_id": authlib_user_data.get("id"),
             "status": ModalStatus.ACTIVE,
@@ -277,8 +278,8 @@ def notes(
                 header="header_4",
                 is_always=False,
                 frequency=10,
-                group_ids=[group.group_id for group in groups if group.group_id < 3],
-                service_ids=[service.service_id for service in services if service.service_id < 3],
+                group_ids=[group.id for group in groups][:2],
+                service_ids=[service.id for service in services][:2],
             ),
             "admin_id": authlib_user_data.get("id"),
             "status": ModalStatus.ARCHIVED,
@@ -289,18 +290,48 @@ def notes(
                 header="header_5",
                 is_always=False,
                 frequency=10,
-                group_ids=[group.group_id for group in groups if group.group_id == 3],
-                service_ids=[service.service_id for service in services if service.service_id == 3],
+                group_ids=[group.id for group in groups][2:3],
+                service_ids=[service.id for service in services][2:3],
             ),
             "admin_id": authlib_user_data.get("id"),
             "status": ModalStatus.ARCHIVED,
         },
     ]
     for offset, d in enumerate(note_data):
-        d["schema"].start_ts = datetime.now() + offset * timedelta(hours=1)
-        d["schema"].end_ts = datetime.now() + offset * timedelta(hours=1)
-
+        d["schema"].start_ts = datetime.now(timezone.utc).replace(tzinfo=None) + offset * timedelta(hours=1)
+        d["schema"].end_ts = datetime.now(timezone.utc).replace(tzinfo=None) + offset * timedelta(hours=1)
+    note_data.extend(
+        [{# просроченная модалка index 5
+            "type_id": note_types[4].type_id,
+            "schema": NoteImagePost(
+                header="header_6",
+                is_always=False,
+                frequency=10,
+                group_ids=[group.id for group in groups][2:3],
+                service_ids=[service.id for service in services][2:3],
+                start_ts = datetime.now(),
+                end_ts = datetime.now(timezone.utc).replace(tzinfo=None) - timedelta(hours=1)
+            ),
+            "admin_id": authlib_user_data.get("id"),
+            "status": ModalStatus.ARCHIVED,           
+        },
+        {# просроченная модалка c is_always=True index 6
+            "type_id": note_types[4].type_id,
+            "schema": NoteImagePost(
+                header="header_7",
+                is_always=True,
+                frequency=10,
+                group_ids=[group.id for group in groups][2:3],
+                service_ids=[service.id for service in services][2:3],
+                start_ts = datetime.now(),
+                end_ts = datetime.now(timezone.utc).replace(tzinfo=None) - timedelta(hours=1)
+            ),
+            "admin_id": authlib_user_data.get("id"),
+            "status": ModalStatus.ARCHIVED,           
+        }]
+    )
     notes = [create_note(**note) for note in note_data]
+
     for note in notes:
         dbsession.add(note)
     dbsession.commit()

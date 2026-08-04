@@ -301,34 +301,36 @@ def notes(
         d["schema"].start_ts = datetime.now(timezone.utc).replace(tzinfo=None) + offset * timedelta(hours=1)
         d["schema"].end_ts = datetime.now(timezone.utc).replace(tzinfo=None) + offset * timedelta(hours=1)
     note_data.extend(
-        [{# просроченная модалка index 5
-            "type_id": note_types[4].type_id,
-            "schema": NoteImagePost(
-                header="header_6",
-                is_always=False,
-                frequency=10,
-                group_ids=[group.id for group in groups][2:3],
-                service_ids=[service.id for service in services][2:3],
-                start_ts = datetime.now(),
-                end_ts = datetime.now(timezone.utc).replace(tzinfo=None) - timedelta(hours=1)
-            ),
-            "admin_id": authlib_user_data.get("id"),
-            "status": ModalStatus.ARCHIVED,           
-        },
-        {# просроченная модалка c is_always=True index 6
-            "type_id": note_types[4].type_id,
-            "schema": NoteImagePost(
-                header="header_7",
-                is_always=True,
-                frequency=10,
-                group_ids=[group.id for group in groups][2:3],
-                service_ids=[service.id for service in services][2:3],
-                start_ts = datetime.now(),
-                end_ts = datetime.now(timezone.utc).replace(tzinfo=None) - timedelta(hours=1)
-            ),
-            "admin_id": authlib_user_data.get("id"),
-            "status": ModalStatus.ARCHIVED,           
-        }]
+        [
+            {  # просроченная модалка index 5
+                "type_id": note_types[4].type_id,
+                "schema": NoteImagePost(
+                    header="header_6",
+                    is_always=False,
+                    frequency=10,
+                    group_ids=[group.id for group in groups][2:3],
+                    service_ids=[service.id for service in services][2:3],
+                    start_ts=datetime.now(),
+                    end_ts=datetime.now(timezone.utc).replace(tzinfo=None) - timedelta(hours=1),
+                ),
+                "admin_id": authlib_user_data.get("id"),
+                "status": ModalStatus.ARCHIVED,
+            },
+            {  # просроченная модалка c is_always=True index 6
+                "type_id": note_types[4].type_id,
+                "schema": NoteImagePost(
+                    header="header_7",
+                    is_always=True,
+                    frequency=10,
+                    group_ids=[group.id for group in groups][2:3],
+                    service_ids=[service.id for service in services][2:3],
+                    start_ts=datetime.now(),
+                    end_ts=datetime.now(timezone.utc).replace(tzinfo=None) - timedelta(hours=1),
+                ),
+                "admin_id": authlib_user_data.get("id"),
+                "status": ModalStatus.ARCHIVED,
+            },
+        ]
     )
     notes = [create_note(**note) for note in note_data]
 

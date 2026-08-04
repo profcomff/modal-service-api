@@ -1,8 +1,8 @@
 import pytest
 from starlette import status
 
-from modal_backend.models.db import Note, Group, Service, ModalStatus
-from modal_backend.schemas.models import NoteInfoGet, NoteRatingGet, NoteTextGet, NoteChoiceGet, NoteImageGet
+from modal_backend.models.db import Group, ModalStatus, Note, Service
+from modal_backend.schemas.models import NoteChoiceGet, NoteImageGet, NoteInfoGet, NoteRatingGet, NoteTextGet
 from modal_backend.settings import get_settings
 
 url: str = "/notification"
@@ -202,7 +202,7 @@ def test_get_notes(
     service_indexes = range(len(services))
     groups_id = []
     services_id = []
-    if isinstance(group_n_list, list): 
+    if isinstance(group_n_list, list):
         for group_n in group_n_list:
             if group_n in group_indexes:
                 groups_id.append(groups[group_n].id)
@@ -211,7 +211,7 @@ def test_get_notes(
     else:
         groups_id = group_n_list
 
-    if isinstance(service_n_list, list): 
+    if isinstance(service_n_list, list):
         for service_n in service_n_list:
             if service_n in service_indexes:
                 services_id.append(services[service_n].id)
@@ -219,7 +219,7 @@ def test_get_notes(
                 services_id.append(service_n)
     else:
         services_id = service_n_list
- 
+
     dict_of_params = {
         "type_id": type_id if type_id is not None else None,
         "groups_id": groups_id if groups_id is not None else None,
@@ -271,6 +271,7 @@ def test_get_notes(
             for resp_obj in response_data:
                 assert resp_obj.get("status") == modal_status
 
+
 @pytest.mark.parametrize(
     "status_code, note_n, type_model",
     [
@@ -309,8 +310,7 @@ def test_get_notes(
             "abc",
             None,
         ),
-
-    ]
+    ],
 )
 def test_get_note_by_id(client, notes, status_code, note_n, type_model):
     notes_indexes = range(len(notes))
@@ -318,10 +318,9 @@ def test_get_note_by_id(client, notes, status_code, note_n, type_model):
     response = client.get(f"{url}/{id_of_note}")
 
     assert response.status_code == status_code
-    
+
     if status_code == status.HTTP_200_OK:
         type_model.model_validate(response.json(), extra="forbid")
-
 
 
 @pytest.mark.parametrize(
@@ -341,13 +340,7 @@ def test_get_note_by_id(client, notes, status_code, note_n, type_model):
             False,
             False,
         ),
-        (
-            status.HTTP_200_OK,
-            3,
-            ModalStatus.ACTIVE,
-            False,
-            False
-        ),
+        (status.HTTP_200_OK, 3, ModalStatus.ACTIVE, False, False),
         (
             status.HTTP_403_FORBIDDEN,
             3,
@@ -362,24 +355,25 @@ def test_get_note_by_id(client, notes, status_code, note_n, type_model):
             False,
             True,
         ),
-        (# просроченная модалка
+        (  # просроченная модалка
             status.HTTP_403_FORBIDDEN,
             5,
             ModalStatus.ACTIVE,
             False,
             False,
         ),
-        (# просроченная модалка с is_always=True
+        (  # просроченная модалка с is_always=True
             status.HTTP_200_OK,
             6,
             ModalStatus.ACTIVE,
             False,
             False,
         ),
-
-    ]
+    ],
 )
-def test_update_note_status(client, dbsession, notes, note_n, status_code, modal_status, deleted_group_id_flag, deleted_service_id_flag):
+def test_update_note_status(
+    client, dbsession, notes, note_n, status_code, modal_status, deleted_group_id_flag, deleted_service_id_flag
+):
 
     notes_indexes = range(len(notes))
     id_of_note = notes[note_n].id if note_n in notes_indexes else note_n
@@ -410,14 +404,218 @@ def test_update_note_status(client, dbsession, notes, note_n, status_code, modal
         (status.HTTP_200_OK, 0),
         (status.HTTP_404_NOT_FOUND, -1),
         (status.HTTP_422_UNPROCESSABLE_CONTENT, "one"),
-    ]
+    ],
 )
 def test_delete_note(client, dbsession, notes, status_code, note_n):
     note_indexes = range(len(notes))
     id_of_note = notes[note_n].id if note_n in note_indexes else note_n
-    
+
     response = client.delete(f"{url}/{id_of_note}")
     assert response.status_code == status_code
     if status_code == status.HTTP_200_OK:
         deleted_note = Note.query(session=dbsession).filter(Note.id == id_of_note).populate_existing().one_or_none
         assert deleted_note is not None
+
+
+@pytest.mark.parametrize(
+    "status_code, body, type_model, path",
+    [
+        (
+            status.HTTP_200_OK,
+            {
+                "header": "string",
+                "group_ids": [0],  # индексы
+                "service_ids": [0],  # индексы
+                "frequency": 0,
+                "start_ts": "2026-08-04T17:21:45.694Z",
+                "end_ts": "2026-08-04T17:22:45.694Z",
+                "is_always": False,
+                "info_text": "string",
+            },
+            NoteInfoGet,
+            "/info",
+        ),
+        (
+            status.HTTP_200_OK,
+            {
+                "header": "string",
+                "group_ids": [0],  # индексы
+                "service_ids": [0],  # индексы
+                "frequency": 0,
+                "start_ts": "2026-08-04T17:21:45.694Z",
+                "end_ts": "2026-08-04T17:22:45.694Z",
+                "is_always": True,
+                "rating_max": 0,
+            },
+            NoteRatingGet,
+            "/rating",
+        ),
+        (
+            status.HTTP_200_OK,
+            {
+                "header": "string",
+                "group_ids": [0],  # индексы
+                "service_ids": [0],  # индексы
+                "frequency": 0,
+                "start_ts": "2026-08-04T17:21:45.694Z",
+                "end_ts": "2026-08-04T17:22:45.694Z",
+                "is_always": False,
+                "text": "string",
+                "max_length": 6,
+            },
+            NoteTextGet,
+            "/text",
+        ),
+        (
+            status.HTTP_200_OK,
+            {
+                "header": "string",
+                "group_ids": [0],  # индексы
+                "service_ids": [0],  # индексы
+                "frequency": 0,
+                "start_ts": "2026-08-04T17:21:45.694Z",
+                "end_ts": "2026-08-04T17:22:45.694Z",
+                "is_always": True,
+                "choice_options": [{"id": 0, "text": "string"}],
+                "is_multiple": True,
+            },
+            NoteChoiceGet,
+            "/choice",
+        ),
+        (
+            status.HTTP_200_OK,
+            {
+                "header": "string",
+                "group_ids": [0],  # индексы
+                "service_ids": [0],  # индексы
+                "frequency": 0,
+                "start_ts": "2026-08-04T17:21:45.694Z",
+                "end_ts": "2026-08-04T17:22:45.694Z",
+                "is_always": False,
+                "images": ["string"],
+            },
+            NoteImageGet,
+            "/image",
+        ),
+        (
+            status.HTTP_422_UNPROCESSABLE_CONTENT,
+            {
+                "header": "string",
+                "group_ids": "two",  # индексы
+                "service_ids": [1, "two", 3],  # индексы
+                "frequency": "digit",
+                "start_ts": "2026-08-04T17:21:45.694Z",
+                "end_ts": "2026-08-04T17:22:45.694Z",
+                "is_always": None,
+                "info_text": "string",
+            },
+            NoteInfoGet,
+            "/info",
+        ),
+        (
+            status.HTTP_422_UNPROCESSABLE_CONTENT,
+            {
+                "header": "string",
+                "group_ids": "two",  # индексы
+                "service_ids": [1, "two", 3],  # индексы
+                "frequency": "digit",
+                "start_ts": "2026-08-04T17:21:45.694Z",
+                "end_ts": "2026-08-04T17:22:45.694Z",
+                "is_always": None,
+                "max_rating": "string",
+            },
+            NoteRatingGet,
+            "/rating",
+        ),
+        (
+            status.HTTP_422_UNPROCESSABLE_CONTENT,
+            {
+                "header": "string",
+                "group_ids": "two",  # индексы
+                "service_ids": [1, "two", 3],  # индексы
+                "frequency": "digit",
+                "start_ts": "2026-08-04T17:21:45.694Z",
+                "end_ts": "2026-08-04T17:22:45.694Z",
+                "is_always": None,
+                "text": "string",
+                "max_length": "string",
+            },
+            NoteTextGet,
+            "/text",
+        ),
+        (
+            status.HTTP_422_UNPROCESSABLE_CONTENT,
+            {
+                "header": "string",
+                "group_ids": "two",  # индексы
+                "service_ids": [1, "two", 3],  # индексы
+                "frequency": "digit",
+                "start_ts": "2026-08-04T17:21:45.694Z",
+                "end_ts": "2026-08-04T17:22:45.694Z",
+                "is_always": None,
+                "choice_options": [{"id": 0, "text": "string"}],
+                "is_multiple": None,
+            },
+            NoteChoiceGet,
+            "/choice",
+        ),
+        (
+            status.HTTP_422_UNPROCESSABLE_CONTENT,
+            {
+                "header": "string",
+                "group_ids": "two",  # индексы
+                "service_ids": [1, "two", 3],  # индексы
+                "frequency": "digit",
+                "start_ts": "2026-08-04T17:21:45.694Z",
+                "end_ts": "2026-08-04T17:22:45.694Z",
+                "is_always": None,
+                "images": ["string"],
+            },
+            NoteImageGet,
+            "/image",
+        ),
+    ],
+)
+def test_create_all_type_of_note(client, dbsession, groups, services, note_types, status_code, body, type_model, path):
+    group_indexes = range(len(groups))
+    service_indexes = range(len(services))
+    group_n_list = body.get("group_ids")
+    service_n_list = body.get("service_ids")
+    groups_id = []
+    services_id = []
+    if isinstance(group_n_list, list):
+        for group_n in group_n_list:
+            if group_n in group_indexes:
+                groups_id.append(groups[group_n].id)
+            else:
+                groups_id.append(group_n)
+    else:
+        groups_id = group_n_list
+
+    if isinstance(service_n_list, list):
+        for service_n in service_n_list:
+            if service_n in service_indexes:
+                services_id.append(services[service_n].id)
+            else:
+                services_id.append(service_n)
+    else:
+        services_id = service_n_list
+
+    body["group_ids"] = groups_id
+    body["service_ids"] = services_id
+
+    response = client.post(f"{url}{path}", json=body)
+    assert response.status_code == status_code
+
+    if status_code == status.HTTP_200_OK:
+        response_model = type_model.model_validate(response.json(), extra="forbid")
+        note = Note.query(session=dbsession).filter(Note.id == response_model.id).one_or_none()
+        assert note
+        assert response_model.type_id == note.type_id
+        assert response_model.header == note.header
+        assert response_model.status == note.status
+        assert response_model.admin_id == note.admin_id
+
+        if type_model is NoteTextGet:
+            assert len(note.text) <= note.max_length
+        dbsession.delete(note)

@@ -15,7 +15,7 @@ settings = get_settings()
         (status.HTTP_200_OK),
     ],
 )
-def test_get_group(client, groups, status_code):
+def test_get_groups(client, groups, status_code):
     response = client.get(url)
     assert response.status_code == status_code
 
@@ -123,8 +123,5 @@ def test_update_group(client, dbsession, groups, status_code, body, group_n):
         response_model = GroupGet(**response_data)
         exist_group = dbsession.query(Group).filter(Group.id == response_model.id).populate_existing().one_or_none()
         assert exist_group
-        try:
-            assert exist_group.group_id == body.get("group_id")
-            assert exist_group.name == body.get("name")
-        finally:
-            dbsession.delete(exist_group)
+        assert exist_group.group_id == body.get("group_id")
+        assert exist_group.name == body.get("name")

@@ -15,7 +15,7 @@ settings = get_settings()
         (status.HTTP_200_OK),
     ],
 )
-def test_get_service(client, services, status_code):
+def test_get_services(client, services, status_code):
     response = client.get(url)
     assert response.status_code == status_code
 
@@ -119,14 +119,10 @@ def test_update_service(client, dbsession, services, status_code, body, service_
     assert response.status_code == status_code
 
     if status_code == status.HTTP_200_OK:
-        response_data = response.json()
-        response_model = ServiceGet(**response_data)
+        response_model = ServiceGet.model_validate(response.json(), extra="forbid")
         exist_service = (
             dbsession.query(Service).filter(Service.id == response_model.id).populate_existing().one_or_none()
         )
         assert exist_service
-        try:
-            assert exist_service.service_id == body.get("service_id")
-            assert exist_service.name == body.get("name")
-        finally:
-            dbsession.delete(exist_service)
+        assert exist_service.service_id == body.get("service_id")
+        assert exist_service.name == body.get("name")

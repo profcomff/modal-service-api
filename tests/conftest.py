@@ -21,6 +21,8 @@ from modal_backend.schemas.models import (
 from modal_backend.models.db import Group, Service, ModalStatus, Note
 from modal_backend.settings import Settings
 
+NOW = datetime.now(timezone.utc).replace(tzinfo=None)
+
 
 class PostgresConfig:
     """Дата-класс со значениями для контейнера с тестовой БД и для alembic-миграции."""
@@ -153,7 +155,7 @@ def create_note_type(name: str, type_id: int):
 
 @pytest.fixture()
 def note_types(dbsession):
-    """Создает три разных типа модалок."""
+    """Создает пять разных типа модалок."""
     note_type_data = [
         ("info", 1),
         ("rating", 2),
@@ -211,6 +213,12 @@ def services(dbsession):
     dbsession.commit()
 
 
+@pytest.fixture()
+def mock_datetime_now(mocker):
+    mock_datetime = mocker.patch("modal_backend.utils.services.datetime")
+    mock_datetime.now.return_value = NOW
+    yield
+
 def create_note(
     type_id: int,
     schema: NoteChoicePost | NoteImagePost | NoteInfoPost | NoteRatingPost | NoteTextPost,
@@ -234,7 +242,16 @@ def notes(
     services,
     authlib_user_data,
 ):
-    """Создает 7 модалок: 5 с разными типами, две просроченные."""
+    """Создает 8 модалок: 
+    indexes:         descriprion:
+    (0, 1, 2, 3, 4)  5 с разными типами
+    (0, 1, 2)        3 активные
+    (3, 4, 5, 6, 7)  5 архивных
+    (0, 2, 4, 6, 7)  group_ids = [3] service_ids = [3]
+    (1, 3)           group_ids = [1, 2] service_ids = [1, 2]
+    (5)              group_ids - [1, 2, 3] service_ids = [1, 2, 3]
+    (6, 7)           просроченные, одна с is_always=True
+    """
     note_data = [
         {
             "type_id": note_types[0].type_id,
@@ -296,13 +313,27 @@ def notes(
             "admin_id": authlib_user_data.get("id"),
             "status": ModalStatus.ARCHIVED,
         },
+        {
+            "type_id": note_types[4].type_id,
+            "schema": NoteImagePost(
+                header="header_5",
+                is_always=False,
+                frequency=10,
+                group_ids=[group.id for group in groups],
+                service_ids=[service.id for service in services],
+            ),
+            "admin_id": authlib_user_data.get("id"),
+            "status": ModalStatus.ARCHIVED,
+        },
+
     ]
+
     for offset, d in enumerate(note_data):
-        d["schema"].start_ts = datetime.now(timezone.utc).replace(tzinfo=None) + offset * timedelta(hours=1)
-        d["schema"].end_ts = datetime.now(timezone.utc).replace(tzinfo=None) + offset * timedelta(hours=1)
+        d["schema"].start_ts = NOW + offset * timedelta(hours=1)
+        d["schema"].end_ts = NOW + offset * timedelta(hours=1) + timedelta(hours=1)
     note_data.extend(
         [
-            {  # просроченная модалка index 5
+            {  # просроченная модалка index 6
                 "type_id": note_types[4].type_id,
                 "schema": NoteImagePost(
                     header="header_6",
@@ -310,13 +341,13 @@ def notes(
                     frequency=10,
                     group_ids=[group.id for group in groups][2:3],
                     service_ids=[service.id for service in services][2:3],
-                    start_ts=datetime.now(),
-                    end_ts=datetime.now(timezone.utc).replace(tzinfo=None) - timedelta(hours=1),
+                    start_ts=NOW + timedelta(hours=2) * 5,
+                    end_ts= NOW - timedelta(hours=1) * 5,
                 ),
                 "admin_id": authlib_user_data.get("id"),
                 "status": ModalStatus.ARCHIVED,
             },
-            {  # просроченная модалка c is_always=True index 6
+            {  # просроченная модалка c is_always=True index 7
                 "type_id": note_types[4].type_id,
                 "schema": NoteImagePost(
                     header="header_7",
@@ -324,8 +355,8 @@ def notes(
                     frequency=10,
                     group_ids=[group.id for group in groups][2:3],
                     service_ids=[service.id for service in services][2:3],
-                    start_ts=datetime.now(),
-                    end_ts=datetime.now(timezone.utc).replace(tzinfo=None) - timedelta(hours=1),
+                    start_ts=NOW + timedelta(hours=3) * 5,
+                    end_ts=NOW - timedelta(hours=1) * 5,
                 ),
                 "admin_id": authlib_user_data.get("id"),
                 "status": ModalStatus.ARCHIVED,

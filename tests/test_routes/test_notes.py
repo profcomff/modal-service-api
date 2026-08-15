@@ -1,8 +1,9 @@
-import pytest
-from starlette import status
 from typing import Any
 
-from modal_backend.models.db import Group, ModalStatus, Note, Service
+import pytest
+from starlette import status
+
+from modal_backend.models.db import Group, ModalStatus, NoteTypeEnum, Note, Service
 from modal_backend.schemas.models import NoteChoiceGet, NoteImageGet, NoteInfoGet, NoteRatingGet, NoteTextGet
 from modal_backend.settings import get_settings
 
@@ -12,7 +13,7 @@ settings = get_settings()
 
 def resolve_items(n_list: list | Any, items: list) -> list | Any:
     """
-    Вспомогательная функция для перевода индексов списков групп и сервисов 
+    Вспомогательная функция для перевода индексов списков групп и сервисов
     с учётом возможности указывать невалидные значения(для негативных кейсов)
     """
     indexes = range(len(items))
@@ -187,7 +188,7 @@ def resolve_items(n_list: list | Any, items: list) -> list | Any:
         ),
     ],
 )
-def test_create_all_type_of_note(client, dbsession, groups, services, note_types, status_code, body, type_model, path):
+def test_create_all_type_of_note(client, dbsession, groups, services, status_code, body, type_model, path):
 
     json_body = body
     group_n_list = json_body.get("group_ids")
@@ -215,15 +216,16 @@ def test_create_all_type_of_note(client, dbsession, groups, services, note_types
         dbsession.delete(note)
 
 
-def calculate_expected_len(all_notes, 
-                           type_id: int | None,
-                           groups_id: list[int] | None, 
-                           services_id: list[int] | None, 
-                           status: str | None, 
-                           limit: int,
-                           offset: int,
-                           asc_order: bool | None
-                           ) -> list[Note]:
+def calculate_expected_len(
+    all_notes,
+    type_id: int | None,
+    groups_id: list[int] | None,
+    services_id: list[int] | None,
+    status: str | None,
+    limit: int,
+    offset: int,
+    asc_order: bool | None,
+) -> list[Note]:
     """
     Вспомогательная функция для подсчета корректной длины списка модалок
     документирующая контракт пагинации и фильтрации
@@ -233,15 +235,15 @@ def calculate_expected_len(all_notes,
     if type_id is not None:
         filtered_notes = [note for note in filtered_notes if note.type_id == type_id]
     if groups_id is not None:
-        filtered_notes = [note for note in filtered_notes if any(g in note.group_ids for g in groups_id)] 
+        filtered_notes = [note for note in filtered_notes if any(g in note.group_ids for g in groups_id)]
     if services_id is not None:
-        filtered_notes = [note for note in filtered_notes if any(s in note.service_ids for s in services_id)] 
+        filtered_notes = [note for note in filtered_notes if any(s in note.service_ids for s in services_id)]
     if status is not None:
         filtered_notes = [note for note in filtered_notes if note.status == status]
 
     filtered_notes = sorted(filtered_notes, key=lambda note: note.start_ts, reverse=(asc_order is not True))
 
-    return [note.id for note in filtered_notes[offset:limit + offset]]
+    return [note.id for note in filtered_notes[offset : limit + offset]]
 
 
 @pytest.mark.parametrize(
@@ -278,7 +280,7 @@ def calculate_expected_len(all_notes,
             999,  # limit
             1,  # offset
         ),
-        (  
+        (
             status.HTTP_404_NOT_FOUND,
             None,  # type_id
             [0, 1, 2],  # group_n_list
@@ -310,7 +312,7 @@ def calculate_expected_len(all_notes,
         ),
         (  # ограничение по типу модалки
             status.HTTP_200_OK,
-            4,  # type_id
+            NoteTypeEnum.CHOICE,  # type_id
             None,  # group_n_list
             None,  # service_n_list
             None,  # modal_status
@@ -458,7 +460,7 @@ def test_get_notes(
 
         ids_in_response = [note.get("id") for note in response_data]
         # проверяем порядок
-        start_ts_by_id = {note.id : note.start_ts for note in notes}
+        start_ts_by_id = {note.id: note.start_ts for note in notes}
         ts_data = [start_ts_by_id[note_id] for note_id in ids_in_response]
         if query.get("asc_order"):
             assert ts_data == sorted(ts_data)
@@ -466,21 +468,24 @@ def test_get_notes(
             assert ts_data == sorted(ts_data, reverse=True)
 
         # проверка контракта фильтрации и пагинации(содержимого и длины после урезания limit-ом и offset-ом)
-        expected_note_ids = calculate_expected_len(notes, 
-                                                   type_id=query.get("type_id"),
-                                                   groups_id=query.get("groups_id"),
-                                                   services_id=query.get("services_id"),
-                                                   status=query.get("status"),
-                                                   limit=query.get("limit", 10),
-                                                   offset=query.get("offset", 0),
-                                                   asc_order=query.get("asc_order"),
-                                                   )
+        expected_note_ids = calculate_expected_len(
+            notes,
+            type_id=query.get("type_id"),
+            groups_id=query.get("groups_id"),
+            services_id=query.get("services_id"),
+            status=query.get("status"),
+            limit=query.get("limit", 10),
+            offset=query.get("offset", 0),
+            asc_order=query.get("asc_order"),
+        )
 
         assert ids_in_response == expected_note_ids
         # проверка корректности данных отфильтрованных модалок
         for resp_obj in response_data:
-            if type_id: assert resp_obj.get("type_id") == type_id
-            if modal_status: assert resp_obj.get("status") == modal_status
+            if type_id:
+                assert resp_obj.get("type_id") == type_id
+            if modal_status:
+                assert resp_obj.get("status") == modal_status
 
 
 @pytest.mark.parametrize(
@@ -537,18 +542,74 @@ def test_get_note_by_id(client, notes, status_code, note_n, type_model):
 @pytest.mark.parametrize(
     "status_code, note_n, modal_status, deleted_group_id_flag, deleted_service_id_flag",
     [
-        (status.HTTP_200_OK, 0, ModalStatus.ARCHIVED, False, False, ),
-        (status.HTTP_404_NOT_FOUND, -1, ModalStatus.ACTIVE, False, False, ),
-        (status.HTTP_200_OK, 3, ModalStatus.ACTIVE, False, False, ),
-        (status.HTTP_403_FORBIDDEN, 3, ModalStatus.ACTIVE, True, False, ),
-        (status.HTTP_403_FORBIDDEN, 3, ModalStatus.ACTIVE, False, True, ),
-        (status.HTTP_403_FORBIDDEN, 3, ModalStatus.ACTIVE, True, True, ),
-        (status.HTTP_403_FORBIDDEN, 6, ModalStatus.ACTIVE, False, False, ), # просроченная модалка
-        (status.HTTP_200_OK, 7, ModalStatus.ACTIVE, False, False, ),        # просроченная модалка с is_always=True
+        (
+            status.HTTP_200_OK,
+            0,
+            ModalStatus.ARCHIVED,
+            False,
+            False,
+        ),
+        (
+            status.HTTP_404_NOT_FOUND,
+            -1,
+            ModalStatus.ACTIVE,
+            False,
+            False,
+        ),
+        (
+            status.HTTP_200_OK,
+            3,
+            ModalStatus.ACTIVE,
+            False,
+            False,
+        ),
+        (
+            status.HTTP_403_FORBIDDEN,
+            3,
+            ModalStatus.ACTIVE,
+            True,
+            False,
+        ),
+        (
+            status.HTTP_403_FORBIDDEN,
+            3,
+            ModalStatus.ACTIVE,
+            False,
+            True,
+        ),
+        (
+            status.HTTP_403_FORBIDDEN,
+            3,
+            ModalStatus.ACTIVE,
+            True,
+            True,
+        ),
+        (
+            status.HTTP_403_FORBIDDEN,
+            6,
+            ModalStatus.ACTIVE,
+            False,
+            False,
+        ),  # просроченная модалка
+        (
+            status.HTTP_200_OK,
+            7,
+            ModalStatus.ACTIVE,
+            False,
+            False,
+        ),  # просроченная модалка с is_always=True
     ],
 )
 def test_update_note_status(
-    client, dbsession, mock_datetime_now, notes, note_n, status_code, modal_status, deleted_group_id_flag, deleted_service_id_flag
+    client,
+    dbsession,
+    mock_datetime_now,
+    notes,
+    note_n,
+    status_code,
+    modal_status,
+    deleted_group_id_flag,
+    deleted_service_id_flag,
 ):
 
     notes_indexes = range(len(notes))
@@ -589,7 +650,5 @@ def test_delete_note(client, dbsession, notes, status_code, note_n):
     response = client.delete(f"{url}/{id_of_note}")
     assert response.status_code == status_code
     if status_code == status.HTTP_200_OK:
-        deleted_note = (
-                dbsession.query(Note).filter(Note.id == id_of_note).populate_existing().one_or_none()
-                )
+        deleted_note = dbsession.query(Note).filter(Note.id == id_of_note).populate_existing().one_or_none()
         assert deleted_note.is_deleted

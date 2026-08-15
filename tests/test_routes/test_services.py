@@ -104,9 +104,18 @@ def test_update_service(client, dbsession, services, status_code, body, service_
 @pytest.mark.parametrize(
     "status_code, service_n",
     [
-        (status.HTTP_200_OK, 1,),
-        (status.HTTP_404_NOT_FOUND, 999,),
-        (status.HTTP_422_UNPROCESSABLE_CONTENT, "abc",),
+        (
+            status.HTTP_200_OK,
+            1,
+        ),
+        (
+            status.HTTP_404_NOT_FOUND,
+            999,
+        ),
+        (
+            status.HTTP_422_UNPROCESSABLE_CONTENT,
+            "abc",
+        ),
     ],
 )
 def test_delete_service(client, dbsession, services, status_code, service_n):

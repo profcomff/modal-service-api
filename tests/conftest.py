@@ -11,6 +11,7 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from testcontainers.postgres import PostgresContainer
 
+from modal_backend.models.db import Group, ModalStatus, NoteTypeEnum, Note, Service
 from modal_backend.schemas.models import (
     NoteChoicePost,
     NoteImagePost,
@@ -18,7 +19,6 @@ from modal_backend.schemas.models import (
     NoteRatingPost,
     NoteTextPost,
 )
-from modal_backend.models.db import Group, Service, ModalStatus, Note
 from modal_backend.settings import Settings
 
 NOW = datetime.now(timezone.utc).replace(tzinfo=None)
@@ -144,35 +144,6 @@ def client(get_app_with_test_settings, user_mock):
     app = get_app_with_test_settings
     client = TestClient(app)
     return client
-<<<<<<< HEAD
-=======
-
-
-def create_note_type(name: str, type_id: int):
-    """Вспомогательная функция-мини-фабрика для создания разных типов модалок в фикстуре note_types."""
-    return NoteType(name=name, type_id=type_id)
-
-
-@pytest.fixture()
-def note_types(dbsession):
-    """Создает пять разных типа модалок."""
-    note_type_data = [
-        ("info", 1),
-        ("rating", 2),
-        ("text", 3),
-        ("choice", 4),
-        ("image", 5),
-    ]
-
-    note_types = [create_note_type(*note_type) for note_type in note_type_data]
-
-    for note_type in note_types:
-        dbsession.add(note_type)
-    dbsession.commit()
-    yield note_types
-    for note_type in note_types:
-        dbsession.delete(note_type)
-    dbsession.commit()
 
 
 def create_group(group_id: int, name: str) -> Group:
@@ -219,6 +190,7 @@ def mock_datetime_now(mocker):
     mock_datetime.now.return_value = NOW
     yield
 
+
 def create_note(
     type_id: int,
     schema: NoteChoicePost | NoteImagePost | NoteInfoPost | NoteRatingPost | NoteTextPost,
@@ -233,16 +205,14 @@ def create_note(
     )
 
 
-
 @pytest.fixture()
 def notes(
     dbsession,
-    note_types,
     groups,
     services,
     authlib_user_data,
 ):
-    """Создает 8 модалок: 
+    """Создает 8 модалок:
     indexes:         descriprion:
     (0, 1, 2, 3, 4)  5 с разными типами
     (0, 1, 2)        3 активные
@@ -254,7 +224,7 @@ def notes(
     """
     note_data = [
         {
-            "type_id": note_types[0].type_id,
+            "type_id": NoteTypeEnum.INFO,
             "schema": NoteInfoPost(
                 header="header_1",
                 is_always=False,
@@ -266,7 +236,7 @@ def notes(
             "status": ModalStatus.ACTIVE,
         },
         {
-            "type_id": note_types[1].type_id,
+            "type_id": NoteTypeEnum.RATING,
             "schema": NoteRatingPost(
                 header="header_2",
                 is_always=False,
@@ -278,7 +248,7 @@ def notes(
             "status": ModalStatus.ACTIVE,
         },
         {
-            "type_id": note_types[2].type_id,
+            "type_id": NoteTypeEnum.TEXT,
             "schema": NoteTextPost(
                 header="header_3",
                 is_always=False,
@@ -290,7 +260,7 @@ def notes(
             "status": ModalStatus.ACTIVE,
         },
         {
-            "type_id": note_types[3].type_id,
+            "type_id": NoteTypeEnum.CHOICE,
             "schema": NoteChoicePost(
                 header="header_4",
                 is_always=False,
@@ -302,7 +272,7 @@ def notes(
             "status": ModalStatus.ARCHIVED,
         },
         {
-            "type_id": note_types[4].type_id,
+            "type_id": NoteTypeEnum.IMAGE,
             "schema": NoteImagePost(
                 header="header_5",
                 is_always=False,
@@ -314,7 +284,7 @@ def notes(
             "status": ModalStatus.ARCHIVED,
         },
         {
-            "type_id": note_types[4].type_id,
+            "type_id": NoteTypeEnum.IMAGE,
             "schema": NoteImagePost(
                 header="header_5",
                 is_always=False,
@@ -325,7 +295,6 @@ def notes(
             "admin_id": authlib_user_data.get("id"),
             "status": ModalStatus.ARCHIVED,
         },
-
     ]
 
     for offset, d in enumerate(note_data):
@@ -334,7 +303,7 @@ def notes(
     note_data.extend(
         [
             {  # просроченная модалка index 6
-                "type_id": note_types[4].type_id,
+                "type_id": NoteTypeEnum.IMAGE,
                 "schema": NoteImagePost(
                     header="header_6",
                     is_always=False,
@@ -342,13 +311,13 @@ def notes(
                     group_ids=[group.id for group in groups][2:3],
                     service_ids=[service.id for service in services][2:3],
                     start_ts=NOW + timedelta(hours=2) * 5,
-                    end_ts= NOW - timedelta(hours=1) * 5,
+                    end_ts=NOW - timedelta(hours=1) * 5,
                 ),
                 "admin_id": authlib_user_data.get("id"),
                 "status": ModalStatus.ARCHIVED,
             },
             {  # просроченная модалка c is_always=True index 7
-                "type_id": note_types[4].type_id,
+                "type_id": NoteTypeEnum.IMAGE,
                 "schema": NoteImagePost(
                     header="header_7",
                     is_always=True,

@@ -95,8 +95,8 @@ def test_update_group(client, dbsession, groups, status_code, body, group_n):
         response_data = response.json()
         response_model = GroupGet(**response_data)
         exist_group = (
-                Group.query(session=dbsession).filter(Group.id == response_model.id).populate_existing().one_or_none()
-                )
+            Group.query(session=dbsession).filter(Group.id == response_model.id).populate_existing().one_or_none()
+        )
         assert exist_group
         assert exist_group.group_id == body.get("group_id")
         assert exist_group.name == body.get("name")
@@ -105,9 +105,18 @@ def test_update_group(client, dbsession, groups, status_code, body, group_n):
 @pytest.mark.parametrize(
     "status_code, group_n",
     [
-        (status.HTTP_200_OK, 1,),
-        (status.HTTP_404_NOT_FOUND, 99,),
-        (status.HTTP_422_UNPROCESSABLE_CONTENT, "abc",),
+        (
+            status.HTTP_200_OK,
+            1,
+        ),
+        (
+            status.HTTP_404_NOT_FOUND,
+            99,
+        ),
+        (
+            status.HTTP_422_UNPROCESSABLE_CONTENT,
+            "abc",
+        ),
     ],
 )
 def test_delete_group(client, dbsession, groups, status_code, group_n):

@@ -11,7 +11,6 @@ from sqlalchemy import (
     Integer,
     String,
     cast,
-    func,
     or_,
     true,
 )

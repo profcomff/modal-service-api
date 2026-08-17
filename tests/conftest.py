@@ -11,7 +11,7 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from testcontainers.postgres import PostgresContainer
 
-from modal_backend.models.db import Group, ModalStatus, NoteTypeEnum, Note, Service
+from modal_backend.models.db import Group, ModalStatus, Note, NoteTypeEnum, Service
 from modal_backend.schemas.models import (
     NoteChoicePost,
     NoteImagePost,

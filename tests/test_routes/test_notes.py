@@ -3,7 +3,7 @@ from typing import Any
 import pytest
 from starlette import status
 
-from modal_backend.models.db import Group, ModalStatus, NoteTypeEnum, Note, Service
+from modal_backend.models.db import Group, ModalStatus, Note, NoteTypeEnum, Service
 from modal_backend.schemas.models import NoteChoiceGet, NoteImageGet, NoteInfoGet, NoteRatingGet, NoteTextGet
 from modal_backend.settings import get_settings
 

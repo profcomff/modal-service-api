@@ -4,7 +4,6 @@ from fastapi_sqlalchemy import DBSessionMiddleware
 
 from modal_backend import __version__
 from modal_backend.routes.groups import group
-from modal_backend.routes.note_type import notetype
 from modal_backend.routes.notes import note
 from modal_backend.routes.services import service
 from modal_backend.settings import get_settings
@@ -36,6 +35,5 @@ app.add_middleware(
 )
 
 app.include_router(note)
-app.include_router(notetype)
 app.include_router(service)
 app.include_router(group)

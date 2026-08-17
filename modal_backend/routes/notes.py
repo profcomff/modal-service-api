@@ -5,7 +5,7 @@ from fastapi import APIRouter, Depends, Query
 from fastapi_sqlalchemy import db
 
 from modal_backend import settings
-from modal_backend.models.db import ModalStatus, Note
+from modal_backend.models.db import ModalStatus, Note, NoteTypeEnum
 from modal_backend.schemas.base import StatusResponseModel
 from modal_backend.schemas.models import (
     NoteChoiceGet,
@@ -84,11 +84,11 @@ async def get_note(
     """
     note = Note.get(session=db.session, id=id)
     schema_type = {
-        1: NoteInfoGet,
-        2: NoteRatingGet,
-        3: NoteTextGet,
-        4: NoteChoiceGet,
-        5: NoteImageGet,
+        NoteTypeEnum.INFO: NoteInfoGet,
+        NoteTypeEnum.RATING: NoteRatingGet,
+        NoteTypeEnum.TEXT: NoteTextGet,
+        NoteTypeEnum.CHOICE: NoteChoiceGet,
+        NoteTypeEnum.IMAGE: NoteImageGet,
     }
     schema_class = schema_type.get(note.type_id)
     return schema_class.model_validate(note)
@@ -108,7 +108,11 @@ async def create_note_info(
     Права: `["modal.note.create"]`
     """
     new_note = Note.create(
-        session=db.session, type_id=1, **note.model_dump(), admin_id=user.get("id"), status=ModalStatus.ACTIVE
+        session=db.session,
+        type_id=NoteTypeEnum.INFO,
+        **note.model_dump(),
+        admin_id=user.get("id"),
+        status=ModalStatus.ACTIVE,
     )
     return NoteInfoGet.model_validate(new_note)
 
@@ -127,7 +131,11 @@ async def create_note_rating(
     Права: `["modal.note.create"]`
     """
     new_note = Note.create(
-        session=db.session, type_id=2, **note.model_dump(), admin_id=user.get("id"), status=ModalStatus.ACTIVE
+        session=db.session,
+        type_id=NoteTypeEnum.RATING,
+        **note.model_dump(),
+        admin_id=user.get("id"),
+        status=ModalStatus.ACTIVE,
     )
     return NoteRatingGet.model_validate(new_note)
 
@@ -146,7 +154,11 @@ async def create_note_text(
     Права: `["modal.note.create"]`
     """
     new_note = Note.create(
-        session=db.session, type_id=3, **note.model_dump(), admin_id=user.get("id"), status=ModalStatus.ACTIVE
+        session=db.session,
+        type_id=NoteTypeEnum.TEXT,
+        **note.model_dump(),
+        admin_id=user.get("id"),
+        status=ModalStatus.ACTIVE,
     )
     return NoteTextGet.model_validate(new_note)
 
@@ -165,7 +177,11 @@ async def create_note_choice(
     Права: `["modal.note.create"]`
     """
     new_note = Note.create(
-        session=db.session, type_id=4, **note.model_dump(), admin_id=user.get("id"), status=ModalStatus.ACTIVE
+        session=db.session,
+        type_id=NoteTypeEnum.CHOICE,
+        **note.model_dump(),
+        admin_id=user.get("id"),
+        status=ModalStatus.ACTIVE,
     )
     return NoteChoiceGet.model_validate(new_note)
 
@@ -184,7 +200,11 @@ async def create_note_images(
     Права: `["modal.note.create"]`
     """
     new_note = Note.create(
-        session=db.session, type_id=5, **note.model_dump(), admin_id=user.get("id"), status=ModalStatus.ACTIVE
+        session=db.session,
+        type_id=NoteTypeEnum.IMAGE,
+        **note.model_dump(),
+        admin_id=user.get("id"),
+        status=ModalStatus.ACTIVE,
     )
     return NoteImageGet.model_validate(new_note)
 

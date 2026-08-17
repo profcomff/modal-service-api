@@ -3,9 +3,9 @@ from datetime import datetime, timezone
 from requests import Session
 
 from modal_backend.exceptions import AlreadyExists, ForbiddenAction, ObjectNotFound
-from modal_backend.models.db import Group, ModalStatus, Note, NoteType, Service
+from modal_backend.models.db import Group, ModalStatus, Note, Service
 from modal_backend.schemas.base import StatusResponseModel
-from modal_backend.schemas.models import GroupPost, NoteTypePost, ServicePost
+from modal_backend.schemas.models import GroupPost, ServicePost
 
 
 class NoteService:
@@ -84,22 +84,6 @@ class NoteService:
                 status=ModalStatus.ACTIVE,
             )
             return updated_note
-
-
-class NoteTypeService:
-    """
-    Сервис для работы с логикой NoteType и базой данных
-    """
-
-    @classmethod
-    async def create_note_type(cls, db: Session, note_type: NoteTypePost) -> NoteType:
-        data = note_type.model_dump()
-        type_id = data.get("type_id")
-        note_types = NoteType.query(session=db.session).filter(NoteType.type_id == type_id).first()
-        if note_types:
-            raise AlreadyExists(NoteType, type_id)
-        new_note_type = NoteType.create(session=db.session, **data)
-        return new_note_type
 
 
 class ServiceManager:

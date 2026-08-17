@@ -10,7 +10,6 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from testcontainers.postgres import PostgresContainer
 
-from modal_backend.models.db import NoteType
 from modal_backend.settings import Settings
 
 
@@ -134,34 +133,3 @@ def client(get_app_with_test_settings, user_mock):
     app = get_app_with_test_settings
     client = TestClient(app)
     return client
-
-
-def create_note_type(name: str, type_id: int):
-    """Вспомогательная функция-мини-фабрика для создания разных типов модалок в фикстуре note_types."""
-    return NoteType(name=name, type_id=type_id)
-
-
-@pytest.fixture()
-def note_types(dbsession):
-    """Создает три разных типа модалок."""
-    note_type_data = [
-        (
-            "Name 1",
-            1,
-        ),
-        (
-            "Name 2",
-            2,
-        ),
-        ("Name 3", 3),
-    ]
-
-    note_types = [create_note_type(*note_type) for note_type in note_type_data]
-
-    for note_type in note_types:
-        dbsession.add(note_type)
-    dbsession.commit()
-    yield note_types
-    for note_type in note_types:
-        dbsession.delete(note_type)
-    dbsession.commit()

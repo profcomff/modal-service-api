@@ -11,6 +11,7 @@ from sqlalchemy import (
     Integer,
     String,
     cast,
+    func,
     or_,
     true,
 )
@@ -30,12 +31,12 @@ class ModalStatus(str, Enum):
     ARCHIVED: str = "archived"
 
 
-class NoteType(BaseDbModel):
-    __tablename__ = "note_type"
-    id: Mapped[int] = mapped_column(Integer, primary_key=True)
-    type_id: Mapped[int] = mapped_column(Integer, nullable=False, unique=True)
-    name: Mapped[str | None] = mapped_column(String, nullable=True)
-    is_deleted: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
+class NoteTypeEnum(int, Enum):
+    INFO = 1
+    RATING = 2
+    TEXT = 3
+    CHOICE = 4
+    IMAGE = 5
 
 
 class Group(BaseDbModel):
@@ -57,7 +58,7 @@ class Service(BaseDbModel):
 class Note(BaseDbModel):
     __tablename__ = "note"
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
-    type_id: Mapped[int] = mapped_column(Integer, ForeignKey("note_type.type_id"))
+    type_id: Mapped[NoteTypeEnum] = mapped_column(Integer, nullable=False)
     header: Mapped[str] = mapped_column(String, nullable=False)
     info_text: Mapped[str | None] = mapped_column(String, nullable=True)  # type_id=1
     rating_max: Mapped[int | None] = mapped_column(Integer, nullable=True)  # type_id=2
@@ -100,7 +101,7 @@ class Note(BaseDbModel):
         return or_(*(service_ids_jsonb.contains([qid]) for qid in query))
 
     @hybrid_method
-    def search_by_status(self, status: Optional[str] = None) -> bool:
+    def search_by_status(self, status: str | None = None) -> bool:
         if status == "active":
             return Note.status == "active"
         elif status == "archived":
@@ -116,4 +117,28 @@ class NoteResponse(BaseDbModel):
     rating: Mapped[int | None] = mapped_column(Integer, nullable=True)  # type_id=2
     text: Mapped[str | None] = mapped_column(String, nullable=True)  # type_id=3
     selected_choices: Mapped[list[dict] | None] = mapped_column(JSON, nullable=True)  # type_id=4
+    created_at: Mapped[datetime.datetime] = mapped_column(DateTime, nullable=False)
+    is_deleted: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
+
+
+class UserVisit(BaseDbModel):
+    __tablename__ = "user_visit"
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    user_id: Mapped[int] = mapped_column(Integer)
+    service_id: Mapped[int] = mapped_column(Integer, nullable=False)
+    visit_count: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    last_visit_at: Mapped[datetime.datetime] = mapped_column(DateTime, nullable=False)
+    is_deleted: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
+
+
+class NoteView(BaseDbModel):
+    __tablename__ = "note_view"
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    note_id: Mapped[int] = mapped_column(Integer, ForeignKey("note.id"))
+    user_id: Mapped[int] = mapped_column(Integer)
+    shown_count: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    last_visit_number: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    rejected_count: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    first_shown_at: Mapped[datetime.datetime | None] = mapped_column(DateTime)
+    last_shown_at: Mapped[datetime.datetime | None] = mapped_column(DateTime)
     is_deleted: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)

@@ -17,17 +17,6 @@ class ChoiceOption(Base):
     text: str
 
 
-class NoteTypePost(Base):
-    type_id: int
-    name: str
-
-
-class NoteTypeGet(Base):
-    id: int
-    type_id: int
-    name: str
-
-
 class ServiceGet(Base):
     id: int
     service_id: int

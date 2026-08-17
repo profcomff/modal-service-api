@@ -1,4 +1,4 @@
 from .base import Base, BaseDbModel
 from .db import *
 
-__all__ = ["Base", "BaseDbModel", "NoteType", "Group", "Service", "Note", "NoteResponse"]
+__all__ = ["Base", "BaseDbModel", "Group", "Service", "Note", "NoteResponse", "UserVisit", "NoteView"]

@@ -265,7 +265,7 @@ def calculate_expected_len(
             None,  # type_id
             [2],  # group_n_list
             [2],  # service_n_list
-            "active",  # modal_status
+            ModalStatus.ACTIVE.value,  # modal_status
             True,  # asc_order
             2,  # limit
             1,  # offset
@@ -275,7 +275,7 @@ def calculate_expected_len(
             None,  # type_id
             [0, 1, 2],  # group_n_list
             [0, 1, 2],  # service_n_list
-            "archived",  # modal_status
+            ModalStatus.ARCHIVED.value,  # modal_status
             False,  # asc_order
             999,  # limit
             1,  # offset
@@ -285,7 +285,7 @@ def calculate_expected_len(
             None,  # type_id
             [0, 1, 2],  # group_n_list
             [0, 1, 2],  # service_n_list
-            "archived",  # modal_status
+            ModalStatus.ARCHIVED.value,  # modal_status
             False,  # asc_order
             None,  # limit
             5,  # offset
@@ -312,7 +312,7 @@ def calculate_expected_len(
         ),
         (  # ограничение по типу модалки
             status.HTTP_200_OK,
-            NoteTypeEnum.CHOICE,  # type_id
+            NoteTypeEnum.CHOICE.value,  # type_id
             None,  # group_n_list
             None,  # service_n_list
             None,  # modal_status

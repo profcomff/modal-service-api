@@ -1,17 +1,42 @@
 from datetime import datetime, timezone
+from typing import Union
 
 from requests import Session
 
 from modal_backend.exceptions import AlreadyExists, ForbiddenAction, ObjectNotFound
 from modal_backend.models.db import Group, ModalStatus, Note, Service
 from modal_backend.schemas.base import StatusResponseModel
-from modal_backend.schemas.models import GroupPost, ServicePost
+from modal_backend.schemas.models import (
+    GroupPost,
+    NoteChoicePost,
+    NoteImagePost,
+    NoteInfoPost,
+    NoteRatingPost,
+    NoteTextPost,
+    ServicePost,
+)
 
 
 class NoteService:
     """
     Сервис для работы с логикой Notifications и базой данных
     """
+
+    @classmethod
+    async def validate_note(
+        cls, db: Session, note: Union[NoteInfoPost, NoteRatingPost, NoteTextPost, NoteChoicePost, NoteImagePost]
+    ):
+        """Валидация полей при создании note"""
+        if isinstance(note, NoteInfoPost):
+            pass
+        elif isinstance(note, NoteRatingPost):
+            pass
+        elif isinstance(note, NoteTextPost):
+            pass
+        elif isinstance(note, NoteChoicePost):
+            pass
+        else:  # NoteImagePost there
+            pass
 
     @classmethod
     async def get_notes_by_filters(

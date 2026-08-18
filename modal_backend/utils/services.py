@@ -23,7 +23,7 @@ class NoteService:
         type_id: int = None,
         groups_id: list[int] = None,
         services_id: list[int] = None,
-        status: str = None,
+        status: ModalStatus | None = None,
     ):
         notes_query = (
             Note.query(session=db.session)

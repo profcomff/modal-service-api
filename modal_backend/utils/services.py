@@ -3,7 +3,14 @@ from datetime import datetime, timezone
 from requests import Session
 
 from modal_backend.exceptions import AlreadyExists, ForbiddenAction, ObjectNotFound
-from modal_backend.models.db import Group, ModalStatus, Note, Service
+from modal_backend.models.db import (
+    Group,
+    ModalStatus,
+    Note,
+    NoteView,
+    Service,
+    UserVisit,
+)
 from modal_backend.schemas.base import StatusResponseModel
 from modal_backend.schemas.models import GroupPost, ServicePost
 
@@ -39,7 +46,7 @@ class NoteService:
         notes = notes_query.limit(limit).offset(offset).all()
 
         if not notes:
-            raise ObjectNotFound(Note, 'all')
+            raise ObjectNotFound(Note, "all")
 
         return notes
 
@@ -47,13 +54,19 @@ class NoteService:
     async def update_status(cls, db: Session, id: int) -> Note:
         note = Note.get(session=db.session, id=id)
         if note.status == ModalStatus.ACTIVE:
-            updated_note = Note.update(id=id, session=db.session, status=ModalStatus.ARCHIVED)
+            updated_note = Note.update(
+                id=id, session=db.session, status=ModalStatus.ARCHIVED
+            )
             return updated_note
         else:
             group_ids = note.group_ids
             new_group_ids = []
             for group_id in group_ids:
-                group = db.session.query(Group).filter(Group.id == group_id, Group.is_deleted == False).one_or_none()
+                group = (
+                    db.session.query(Group)
+                    .filter(Group.id == group_id, Group.is_deleted == False)
+                    .one_or_none()
+                )
                 if group is not None:
                     new_group_ids.append(group.id)
             if new_group_ids == []:
@@ -86,6 +99,57 @@ class NoteService:
             return updated_note
 
 
+class NoteViewService:
+    """
+    Сервис для учёта показов модалок
+    """
+
+    @classmethod
+    async def mark_view(
+        cls, db: Session, note_id: int, user_id: int, service_id: int
+    ) -> NoteView:
+        note = Note.get(session=db.session, id=note_id)
+        if note.status != ModalStatus.ACTIVE:
+            raise ForbiddenAction(Note)
+
+        user_visit = (
+            db.session.query(UserVisit)
+            .filter(UserVisit.user_id == user_id, UserVisit.service_id == service_id)
+            .one_or_none()
+        )
+
+        if user_visit is not None:
+            visit_count = user_visit.visit_count
+        else:
+            visit_count = 0
+
+        now = datetime.now(timezone.utc).replace(tzinfo=None)
+
+        note_view = (
+            db.session.query(NoteView)
+            .filter(NoteView.note_id == note_id, NoteView.user_id == user_id)
+            .one_or_none()
+        )
+        if note_view is None:
+            note_view = NoteView.create(
+                session=db.session,
+                note_id=note_id,
+                user_id=user_id,
+                shown_count=1,
+                last_visit_number=visit_count,
+                rejected_count=0,
+                first_shown_at=now,
+                last_shown_at=now,
+            )
+        else:
+            note_view.shown_count += 1
+            note_view.last_visit_number = visit_count
+            note_view.last_shown_at = now
+            db.session.flush()
+
+        return note_view
+
+
 class ServiceManager:
     """
     Сервис для работы с логикой Service и базой данных
@@ -93,10 +157,16 @@ class ServiceManager:
 
     @classmethod
     async def create_service(cls, db: Session, service_id: int, name: str):
-        service = Service.query(session=db.session).filter(Service.service_id == service_id).first()
+        service = (
+            Service.query(session=db.session)
+            .filter(Service.service_id == service_id)
+            .first()
+        )
         if service:
             raise AlreadyExists(Service, service_id)
-        new_service = Service.create(session=db.session, service_id=service_id, name=name)
+        new_service = Service.create(
+            session=db.session, service_id=service_id, name=name
+        )
         return new_service
 
     @classmethod
@@ -104,13 +174,17 @@ class ServiceManager:
         Service.get(session=db.session, id=id)
         Service.delete(session=db.session, id=id)
         return StatusResponseModel(
-            status="Success", message="Service has been successfully deleted", ru="Сервис успешно удален"
+            status="Success",
+            message="Service has been successfully deleted",
+            ru="Сервис успешно удален",
         )
 
     @classmethod
     async def update_service(cls, db: Session, id: int, service_info: ServicePost):
         Service.get(session=db.session, id=id)
-        updated_service = Service.update(id, session=db.session, **service_info.model_dump())
+        updated_service = Service.update(
+            id, session=db.session, **service_info.model_dump()
+        )
         return updated_service
 
 
@@ -121,7 +195,9 @@ class GroupService:
 
     @classmethod
     async def create_group(cls, db: Session, group_id: int, name: str):
-        group = Group.query(session=db.session).filter(Group.group_id == group_id).first()
+        group = (
+            Group.query(session=db.session).filter(Group.group_id == group_id).first()
+        )
         if group:
             raise AlreadyExists(Group, group_id)
         new_group = Group.create(session=db.session, group_id=group_id, name=name)
@@ -132,7 +208,9 @@ class GroupService:
         Group.get(session=db.session, id=id)
         Group.delete(session=db.session, id=id)
         return StatusResponseModel(
-            status="Success", message="Group has been successfully deleted", ru="Группа успешно удалена"
+            status="Success",
+            message="Group has been successfully deleted",
+            ru="Группа успешно удалена",
         )
 
     @classmethod

@@ -29,9 +29,5 @@ async def mark_note_view(
 
     Исключение ForbiddenAction(403), если модалка не активна
     """
-    await NoteViewService.mark_view(
-        db, note_id=id, user_id=user.get("id"), service_id=service_id
-    )
-    return StatusResponseModel(
-        status="success", message="View recorded", ru="Показ засчитан"
-    )
+    await NoteViewService.mark_view(db, note_id=id, user_id=user.get("id"), service_id=service_id)
+    return StatusResponseModel(status="success", message="View recorded", ru="Показ засчитан")

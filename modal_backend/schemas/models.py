@@ -1,5 +1,7 @@
 import datetime
 
+from pydantic import model_validator
+
 from modal_backend.models.db import ModalStatus
 from modal_backend.schemas.base import Base
 
@@ -77,7 +79,28 @@ class NotificationPost(Base):
     is_always: bool
 
 
+class NotificationPatch(Base):
+    type_id: int | None = None
+    header: str | None = None
+    group_ids: list[int] | None = None
+    service_ids: list[int] | None = None
+    frequency: int | None = None
+    start_ts: datetime.datetime | None = None
+    end_ts: datetime.datetime | None = None
+    is_always: bool | None = None
+
+    @model_validator(mode="after")
+    def validate_period(self):
+        if self.start_ts is not None and self.end_ts is not None and self.start_ts >= self.end_ts:
+            raise ValueError("start_ts must be earlier than end_ts")
+        return self
+
+
 class NoteInfoPost(NotificationPost):  # type_id=1
+    info_text: str | None = None
+
+
+class NoteInfoPatch(NotificationPatch):  # type_id=1
     info_text: str | None = None
 
 
@@ -85,7 +108,16 @@ class NoteRatingPost(NotificationPost):  # type_id=2
     rating_max: int | None = None
 
 
+class NoteRatingPatch(NotificationPatch):  # type_id=2
+    rating_max: int | None = None
+
+
 class NoteTextPost(NotificationPost):  # type_id=3
+    text: str | None = None
+    max_length: int | None = None
+
+
+class NoteTextPatch(NotificationPatch):  # type_id=3
     text: str | None = None
     max_length: int | None = None
 
@@ -95,7 +127,16 @@ class NoteChoicePost(NotificationPost):  # type_id=4
     is_multiple: bool | None = None
 
 
+class NoteChoicePatch(NotificationPatch):  # type_id=4
+    choice_options: list[ChoiceOption] | None = None
+    is_multiple: bool | None = None
+
+
 class NoteImagePost(NotificationPost):  # type_id=5
+    images: list[str] | None = None
+
+
+class NoteImagePatch(NotificationPatch):  # type_id=5
     images: list[str] | None = None
 
 

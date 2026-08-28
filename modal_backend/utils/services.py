@@ -5,7 +5,7 @@ from requests import Session
 from modal_backend.exceptions import AlreadyExists, ForbiddenAction, ObjectNotFound
 from modal_backend.models.db import Group, ModalStatus, Note, Service
 from modal_backend.schemas.base import StatusResponseModel
-from modal_backend.schemas.models import GroupPost, ServicePost
+from modal_backend.schemas.models import GroupPost, NotificationPatch, ServicePost
 
 
 class NoteService:
@@ -84,6 +84,36 @@ class NoteService:
                 status=ModalStatus.ACTIVE,
             )
             return updated_note
+
+    @classmethod
+    async def update_note(cls, db: Session, id: int, note_info: NotificationPatch, note_type: int) -> Note:
+        note = Note.get(session=db.session, id=id)
+        if note.type_id != note_type:
+            raise ForbiddenAction(Note)
+
+        values = note_info.model_dump(exclude_unset=True)
+        if values.get("type_id") is not None:
+            raise ForbiddenAction(Note)
+        values.pop("type_id", None)
+
+        content_fields = {
+            "info_text",
+            "rating_max",
+            "text",
+            "max_length",
+            "choice_options",
+            "is_multiple",
+            "images",
+        }
+        if note.status == ModalStatus.ACTIVE and content_fields.intersection(values):
+            raise ForbiddenAction(Note)
+
+        start_ts = values.get("start_ts", note.start_ts)
+        end_ts = values.get("end_ts", note.end_ts)
+        if start_ts is not None and end_ts is not None and start_ts >= end_ts:
+            raise ForbiddenAction(Note)
+
+        return Note.update(id=id, session=db.session, **values)
 
 
 class ServiceManager:

@@ -9,16 +9,21 @@ from modal_backend.models.db import ModalStatus, Note, NoteTypeEnum
 from modal_backend.schemas.base import StatusResponseModel
 from modal_backend.schemas.models import (
     NoteChoiceGet,
+    NoteChoicePatch,
     NoteChoicePost,
     NoteGet,
     NoteImageGet,
+    NoteImagePatch,
     NoteImagePost,
     NoteInfoGet,
+    NoteInfoPatch,
     NoteInfoPost,
     NoteRatingGet,
+    NoteRatingPatch,
     NoteRatingPost,
     NoteStatus,
     NoteTextGet,
+    NoteTextPatch,
     NoteTextPost,
     NotificationGet,
 )
@@ -207,6 +212,46 @@ async def create_note_images(
         status=ModalStatus.ACTIVE,
     )
     return NoteImageGet.model_validate(new_note)
+
+
+@note.patch("/info/{id}", response_model=NoteInfoGet)
+async def update_note_info(
+    id: int, note_info: NoteInfoPatch, user=Depends(UnionAuth(scopes=["modal.note.patch"]))
+) -> NoteInfoGet:
+    updated_note = await NoteService.update_note(db, id, note_info, NoteTypeEnum.INFO)
+    return NoteInfoGet.model_validate(updated_note)
+
+
+@note.patch("/rating/{id}", response_model=NoteRatingGet)
+async def update_note_rating(
+    id: int, note_info: NoteRatingPatch, user=Depends(UnionAuth(scopes=["modal.note.patch"]))
+) -> NoteRatingGet:
+    updated_note = await NoteService.update_note(db, id, note_info, NoteTypeEnum.RATING)
+    return NoteRatingGet.model_validate(updated_note)
+
+
+@note.patch("/text/{id}", response_model=NoteTextGet)
+async def update_note_text(
+    id: int, note_info: NoteTextPatch, user=Depends(UnionAuth(scopes=["modal.note.patch"]))
+) -> NoteTextGet:
+    updated_note = await NoteService.update_note(db, id, note_info, NoteTypeEnum.TEXT)
+    return NoteTextGet.model_validate(updated_note)
+
+
+@note.patch("/choice/{id}", response_model=NoteChoiceGet)
+async def update_note_choice(
+    id: int, note_info: NoteChoicePatch, user=Depends(UnionAuth(scopes=["modal.note.patch"]))
+) -> NoteChoiceGet:
+    updated_note = await NoteService.update_note(db, id, note_info, NoteTypeEnum.CHOICE)
+    return NoteChoiceGet.model_validate(updated_note)
+
+
+@note.patch("/image/{id}", response_model=NoteImageGet)
+async def update_note_image(
+    id: int, note_info: NoteImagePatch, user=Depends(UnionAuth(scopes=["modal.note.patch"]))
+) -> NoteImageGet:
+    updated_note = await NoteService.update_note(db, id, note_info, NoteTypeEnum.IMAGE)
+    return NoteImageGet.model_validate(updated_note)
 
 
 @note.patch("/{id}/status", response_model=NoteStatus)

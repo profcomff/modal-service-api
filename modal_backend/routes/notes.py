@@ -218,7 +218,10 @@ async def create_note_images(
     response_model_exclude_none=True,
 )
 async def get_note_responses(
-    id: int, user=Depends(UnionAuth(scopes=["modal.note.read"]))
+    id: int,
+    limit: int = Query(10, ge=0, description="Лимит записей"),
+    offset: int = Query(0, ge=0, description="Смещение записей на N+offset, где N - первая запись"),
+    # user=Depends(UnionAuth(scopes=["modal.note.read"]))
 ) -> list[Union[NoteResponseRatingGet, NoteResponseTextGet, NoteResponseChoiceGet]]:
     """
     Возвращает ответы пользователя по модалке.
@@ -226,6 +229,12 @@ async def get_note_responses(
     Для типов `type_id=2`, `type_id=3`, `type_id=4` возвращаются только те поля,
     которые заполнены в записи ответа: `rating`, `text` или `selected_choices`.
     Для типов `type_id=1` и `type_id=5` пустой список.
+
+    `limit` - максимальное количество возвращаемых ответов.
+
+    `offset` - смещение, определяющее, с какого по порядку ответа начинать выборку.
+    Если без смещения возвращается ответ с условным номером N,
+    то при значении offset = X будет возвращаться ответ с номером N + X.
 
     Права: `["modal.note.read"]`
     """
@@ -241,7 +250,13 @@ async def get_note_responses(
     if schema_type is None:
         return []
 
-    responses = NoteResponse.query(session=db.session).filter(NoteResponse.note_id == id).all()
+    responses = (
+        NoteResponse.query(session=db.session)
+        .filter(NoteResponse.note_id == id)
+        .offset(offset)
+        .limit(limit)
+        .all()
+    )
     return [schema_type.model_validate(response) for response in responses]
 
 

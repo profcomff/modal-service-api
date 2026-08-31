@@ -636,6 +636,128 @@ def test_update_note_status(
 
 
 @pytest.mark.parametrize(
+    "status_code, path, note_n, payload, type_model, expected_field",
+    [
+        (
+            status.HTTP_200_OK,
+            "/info",
+            0,
+            {
+                "header": "updated_header_info",
+                "frequency": 11,
+                "group_ids": [1],
+                "service_ids": [1],
+                "start_ts": "2026-08-28T19:10:29.567Z",
+                "end_ts": "2026-08-30T19:10:29.567Z",
+                "is_always": False,
+            },
+            NoteInfoGet,
+            "header",
+        ),
+        (
+            status.HTTP_200_OK,
+            "/rating",
+            1,
+            {
+                "header": "updated_header_rating",
+                "frequency": 12,
+                "group_ids": [1],
+                "service_ids": [1],
+                "start_ts": "2026-08-28T19:10:29.567Z",
+                "end_ts": "2026-08-30T19:10:29.567Z",
+                "is_always": False,
+            },
+            NoteRatingGet,
+            "header",
+        ),
+        (
+            status.HTTP_200_OK,
+            "/text",
+            2,
+            {
+                "header": "updated_header_text",
+                "frequency": 13,
+                "group_ids": [1],
+                "service_ids": [1],
+                "start_ts": "2026-08-28T19:10:29.567Z",
+                "end_ts": "2026-08-30T19:10:29.567Z",
+                "is_always": False,
+            },
+            NoteTextGet,
+            "header",
+        ),
+        (
+            status.HTTP_200_OK,
+            "/choice",
+            3,
+            {
+                "header": "updated_header_choice",
+                "choice_options": [{"id": 1, "text": "A"}, {"id": 2, "text": "B"}],
+                "is_multiple": True,
+                "frequency": 14,
+                "group_ids": [1],
+                "service_ids": [1],
+                "start_ts": "2026-08-28T19:10:29.567Z",
+                "end_ts": "2026-08-30T19:10:29.567Z",
+                "is_always": False,
+            },
+            NoteChoiceGet,
+            "choice_options",
+        ),
+        (
+            status.HTTP_200_OK,
+            "/image",
+            4,
+            {
+                "header": "updated_header_image",
+                "images": ["img2.jpg", "img3.jpg"],
+                "frequency": 15,
+                "group_ids": [1],
+                "service_ids": [1],
+                "start_ts": "2026-08-28T19:10:29.567Z",
+                "end_ts": "2026-08-30T19:10:29.567Z",
+                "is_always": False,
+            },
+            NoteImageGet,
+            "images",
+        ),
+    ],
+)
+def test_update_note_by_type(client, notes, status_code, path, note_n, payload, type_model, expected_field):
+    id_of_note = notes[note_n].id
+
+    response = client.patch(f"{url}{path}/{id_of_note}", json=payload)
+    assert response.status_code == status_code
+
+    if status_code == status.HTTP_200_OK:
+        response_model = type_model.model_validate(response.json(), extra="forbid")
+        assert response_model.id == id_of_note
+        assert getattr(response_model, expected_field) == payload.get(expected_field)
+
+
+@pytest.mark.parametrize(
+    "path, note_n, payload",
+    [
+        ("/info", 1, {"header": "wrong_type_info"}),
+        ("/rating", 0, {"header": "wrong_type_rating"}),
+        ("/text", 1, {"header": "wrong_type_text"}),
+        ("/choice", 0, {"header": "wrong_type_choice"}),
+        ("/image", 0, {"header": "wrong_type_image"}),
+        ("/text", 2, {"text": "changed_main_content"}),
+        ("/rating", 1, {"rating_max": 10}),
+        ("/choice", 3, {"choice_options": [{"id": 1, "text": "Y"}]}) ,
+        ("/image", 4, {"images": ["new.jpg"]}),
+    ],
+)
+def test_update_note_by_type_forbidden(client, notes, path, note_n, payload):
+    id_of_note = notes[note_n].id
+
+    response = client.patch(f"{url}{path}/{id_of_note}", json=payload)
+    assert response.status_code == status.HTTP_403_FORBIDDEN
+    assert response.json()["status"] == "Error"
+
+
+@pytest.mark.parametrize(
     "status_code, note_n",
     [
         (status.HTTP_200_OK, 0),

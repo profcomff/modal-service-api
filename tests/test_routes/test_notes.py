@@ -745,7 +745,7 @@ def test_update_note_by_type(client, notes, status_code, path, note_n, payload, 
         ("/image", 0, {"header": "wrong_type_image"}),
         ("/text", 2, {"text": "changed_main_content"}),
         ("/rating", 1, {"rating_max": 10}),
-        ("/choice", 3, {"choice_options": [{"id": 1, "text": "Y"}]}) ,
+        ("/choice", 3, {"choice_options": [{"id": 1, "text": "Y"}]}),
         ("/image", 4, {"images": ["new.jpg"]}),
     ],
 )

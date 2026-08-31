@@ -1,3 +1,4 @@
+from datetime import datetime, timedelta, timezone
 from typing import Any
 
 import pytest
@@ -732,7 +733,12 @@ def test_update_note_by_type(client, notes, status_code, path, note_n, payload, 
     if status_code == status.HTTP_200_OK:
         response_model = type_model.model_validate(response.json(), extra="forbid")
         assert response_model.id == id_of_note
-        assert getattr(response_model, expected_field) == payload.get(expected_field)
+
+        if expected_field == "choice_options":
+            actual_value = [{"id": item.id, "text": item.text} for item in response_model.choice_options]
+            assert actual_value == payload.get(expected_field)
+        else:
+            assert getattr(response_model, expected_field) == payload.get(expected_field)
 
 
 @pytest.mark.parametrize(
@@ -745,8 +751,6 @@ def test_update_note_by_type(client, notes, status_code, path, note_n, payload, 
         ("/image", 0, {"header": "wrong_type_image"}),
         ("/text", 2, {"text": "changed_main_content"}),
         ("/rating", 1, {"rating_max": 10}),
-        ("/choice", 3, {"choice_options": [{"id": 1, "text": "Y"}]}),
-        ("/image", 4, {"images": ["new.jpg"]}),
     ],
 )
 def test_update_note_by_type_forbidden(client, notes, path, note_n, payload):
@@ -755,6 +759,39 @@ def test_update_note_by_type_forbidden(client, notes, path, note_n, payload):
     response = client.patch(f"{url}{path}/{id_of_note}", json=payload)
     assert response.status_code == status.HTTP_403_FORBIDDEN
     assert response.json()["status"] == "Error"
+
+
+@pytest.mark.parametrize(
+    "path, payload",
+    [
+        ("/choice", {"choice_options": [{"id": 1, "text": "Y"}]}),
+        ("/image", {"images": ["new.jpg"]}),
+    ],
+)
+def test_update_note_by_type_forbidden_active_content(client, dbsession, groups, services, path, payload):
+    note = Note(
+        type_id=NoteTypeEnum.CHOICE if path == "/choice" else NoteTypeEnum.IMAGE,
+        header="active_choice_or_image",
+        choice_options=[{"id": 1, "text": "A"}] if path == "/choice" else None,
+        images=["old.jpg"] if path == "/image" else None,
+        group_ids=[group.id for group in groups][:1],
+        service_ids=[service.id for service in services][:1],
+        frequency=10,
+        start_ts=datetime.now(timezone.utc).replace(tzinfo=None),
+        end_ts=datetime.now(timezone.utc).replace(tzinfo=None) + timedelta(hours=1),
+        is_always=False,
+        admin_id=0,
+        status=ModalStatus.ACTIVE,
+    )
+    dbsession.add(note)
+    dbsession.commit()
+
+    response = client.patch(f"{url}{path}/{note.id}", json=payload)
+    assert response.status_code == status.HTTP_403_FORBIDDEN
+    assert response.json()["status"] == "Error"
+
+    dbsession.delete(note)
+    dbsession.commit()
 
 
 @pytest.mark.parametrize(

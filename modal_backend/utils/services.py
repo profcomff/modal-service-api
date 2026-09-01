@@ -3,14 +3,7 @@ from datetime import datetime, timezone
 from requests import Session
 
 from modal_backend.exceptions import AlreadyExists, ForbiddenAction, ObjectNotFound
-from modal_backend.models.db import (
-    Group,
-    ModalStatus,
-    Note,
-    NoteView,
-    Service,
-    UserVisit,
-)
+from modal_backend.models.db import Group, ModalStatus, Note, Service
 from modal_backend.schemas.base import StatusResponseModel
 from modal_backend.schemas.models import GroupPost, ServicePost
 
@@ -91,53 +84,6 @@ class NoteService:
                 status=ModalStatus.ACTIVE,
             )
             return updated_note
-
-
-class NoteViewService:
-    """
-    Сервис для учёта показов модалок
-    """
-
-    @classmethod
-    async def mark_view(cls, db: Session, note_id: int, user_id: int, service_id: int) -> NoteView:
-        note = Note.get(session=db.session, id=note_id)
-        if note.status != ModalStatus.ACTIVE:
-            raise ForbiddenAction(Note)
-
-        user_visit = (
-            db.session.query(UserVisit)
-            .filter(UserVisit.user_id == user_id, UserVisit.service_id == service_id)
-            .one_or_none()
-        )
-
-        if user_visit is not None:
-            visit_count = user_visit.visit_count
-        else:
-            visit_count = 0
-
-        now = datetime.now(timezone.utc).replace(tzinfo=None)
-
-        note_view = (
-            db.session.query(NoteView).filter(NoteView.note_id == note_id, NoteView.user_id == user_id).one_or_none()
-        )
-        if note_view is None:
-            note_view = NoteView.create(
-                session=db.session,
-                note_id=note_id,
-                user_id=user_id,
-                shown_count=1,
-                last_visit_number=visit_count,
-                rejected_count=0,
-                first_shown_at=now,
-                last_shown_at=now,
-            )
-        else:
-            note_view.shown_count += 1
-            note_view.last_visit_number = visit_count
-            note_view.last_shown_at = now
-            db.session.flush()
-
-        return note_view
 
 
 class ServiceManager:

@@ -4,7 +4,7 @@ from fastapi_sqlalchemy import db
 
 from modal_backend.schemas.base import StatusResponseModel
 from modal_backend.settings import Settings, get_settings
-from modal_backend.utils.services import NoteViewService
+from modal_backend.utils.user_logic import UserService
 
 settings: Settings = get_settings()
 user_router = APIRouter(prefix="/user", tags=["User"])
@@ -17,17 +17,13 @@ async def mark_note_view(
     user=Depends(UnionAuth()),
 ) -> StatusResponseModel:
     """
-    Отмечает, что модалка реально была отрисована пользователю.
+    Отмечает, что модалка реально была показана пользователю.
 
-    Увеличивает shown_count в note_view и запоминает номер захода
+    Увеличивает shown_count в таблице note_view и запоминает номер захода
     (last_visit_number), от которого потом считается frequency.
     Если записи в note_view ещё нет — создаёт.
 
     Повторный вызов не ошибка
-
-    Исключение ObjectNotFound(404), если модалки с `id` не существует
-
-    Исключение ForbiddenAction(403), если модалка не активна
     """
-    await NoteViewService.mark_view(db, note_id=id, user_id=user.get("id"), service_id=service_id)
+    await UserService.mark_view(db, note_id=id, user_id=user.get("id"), service_id=service_id)
     return StatusResponseModel(status="success", message="View recorded", ru="Показ засчитан")

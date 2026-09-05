@@ -113,3 +113,22 @@ class GroupPost(Base):
 class NoteStatus(Base):
     id: int
     status: ModalStatus
+
+
+class NoteResponseGet(Base):
+    id: int
+    note_id: int
+    user_id: int
+    created_at: datetime.datetime
+
+
+class NoteResponseRatingGet(NoteResponseGet):  # type_id=2
+    rating: int | None = None
+
+
+class NoteResponseTextGet(NoteResponseGet):  # type_id=3
+    text: str | None = None
+
+
+class NoteResponseChoiceGet(NoteResponseGet):  # type_id=4
+    selected_choices: list[dict] | None = None

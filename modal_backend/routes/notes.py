@@ -5,7 +5,7 @@ from fastapi import APIRouter, Depends, Query
 from fastapi_sqlalchemy import db
 
 from modal_backend import settings
-from modal_backend.models.db import ModalStatus, Note, NoteTypeEnum
+from modal_backend.models.db import ModalStatus, Note, NoteResponse, NoteTypeEnum
 from modal_backend.schemas.base import StatusResponseModel
 from modal_backend.schemas.models import (
     NoteChoiceGet,
@@ -17,6 +17,9 @@ from modal_backend.schemas.models import (
     NoteInfoPost,
     NoteRatingGet,
     NoteRatingPost,
+    NoteResponseChoiceGet,
+    NoteResponseRatingGet,
+    NoteResponseTextGet,
     NoteStatus,
     NoteTextGet,
     NoteTextPost,
@@ -207,6 +210,50 @@ async def create_note_images(
         status=ModalStatus.ACTIVE,
     )
     return NoteImageGet.model_validate(new_note)
+
+
+@note.get(
+    "/{id}/responses",
+    response_model=list[Union[NoteResponseRatingGet, NoteResponseTextGet, NoteResponseChoiceGet]],
+    response_model_exclude_none=True,
+)
+async def get_note_responses(
+    id: int,
+    limit: int = Query(10, ge=0, description="Лимит записей"),
+    offset: int = Query(0, ge=0, description="Смещение записей на N+offset, где N - первая запись"),
+    user=Depends(UnionAuth(scopes=["modal.note.read"])),
+) -> list[Union[NoteResponseRatingGet, NoteResponseTextGet, NoteResponseChoiceGet]]:
+    """
+    Возвращает ответы пользователя по модалке.
+
+    Для типов `type_id=2`, `type_id=3`, `type_id=4` возвращаются только те поля,
+    которые заполнены в записи ответа: `rating`, `text` или `selected_choices`.
+    Для типов `type_id=1` и `type_id=5` пустой список.
+
+    `limit` - максимальное количество возвращаемых модалок
+
+    `offset` -  смещение, определяющее, с какой по порядку модалки начинать выборку.
+    Если без смещения возвращается модалка с условным номером N,
+    то при значении offset = X будет возвращаться модалка с номером N + X
+
+    Права: `["modal.note.read"]`
+    """
+    note_obj = Note.get(session=db.session, id=id)
+    if note_obj.type_id in (NoteTypeEnum.INFO, NoteTypeEnum.IMAGE):
+        return []
+
+    schema_type = {
+        NoteTypeEnum.RATING: NoteResponseRatingGet,
+        NoteTypeEnum.TEXT: NoteResponseTextGet,
+        NoteTypeEnum.CHOICE: NoteResponseChoiceGet,
+    }.get(note_obj.type_id)
+    if schema_type is None:
+        return []
+
+    responses = (
+        NoteResponse.query(session=db.session).filter(NoteResponse.note_id == id).offset(offset).limit(limit).all()
+    )
+    return [schema_type.model_validate(response) for response in responses]
 
 
 @note.patch("/{id}/status", response_model=NoteStatus)

@@ -13,9 +13,7 @@ service = APIRouter(prefix="/service", tags=["Service"])
 
 
 @service.get("", response_model=list[ServiceGet])
-async def get_services(
-    user=Depends(UnionAuth()),
-) -> list[ServiceGet]:
+async def get_services(user=Depends(UnionAuth())) -> list[ServiceGet]:
     """
     Получить список всех сервисов.
     """
@@ -25,8 +23,7 @@ async def get_services(
 
 @service.post("", response_model=ServiceGet)
 async def create_service(
-    service_info: ServicePost,
-    user=Depends(UnionAuth(scopes=["modal.service.create"])),
+    service_info: ServicePost, user=Depends(UnionAuth(scopes=["modal.service.create"]))
 ) -> ServiceGet:
     """
     Создает новый сервис.
@@ -39,9 +36,7 @@ async def create_service(
 
 @service.patch("/{id}", response_model=ServiceGet)
 async def update_service(
-    id: int,
-    service_info: ServicePost,
-    user=Depends(UnionAuth(scopes=["modal.service.update"])),
+    id: int, service_info: ServicePost, user=Depends(UnionAuth(scopes=["modal.service.update"]))
 ) -> ServiceGet:
     """
     Обновляет сервис по `id`.

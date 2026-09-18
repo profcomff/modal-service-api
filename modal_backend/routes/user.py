@@ -11,11 +11,7 @@ user_router = APIRouter(prefix="/user", tags=["User"])
 
 
 @user_router.post("/{id}/view", response_model=StatusResponseModel)
-async def mark_note_view(
-    id: int,
-    service_id: int,
-    user=Depends(UnionAuth()),
-) -> StatusResponseModel:
+async def mark_note_view(id: int, service_id: int, user=Depends(UnionAuth())) -> StatusResponseModel:
     """
     Отмечает, что модалка реально была показана пользователю.
 

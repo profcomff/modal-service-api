@@ -37,7 +37,15 @@ class UserService:
             .filter(NoteView.note_id == note_id, NoteView.user_id == user_id)
             .one_or_none()
         )
-        if note_view is None:
+        if note_view:
+            NoteView.update(
+                note_view.id,
+                session=db.session,
+                shown_count=note_view.shown_count + 1,
+                last_visit_number=visit_count,
+                last_shown_at=now,
+            )
+        else:
             NoteView.create(
                 session=db.session,
                 note_id=note_id,
@@ -45,13 +53,5 @@ class UserService:
                 shown_count=1,
                 last_visit_number=1,
                 first_shown_at=now,
-                last_shown_at=now,
-            )
-        else:
-            NoteView.update(
-                note_view.id,
-                session=db.session,
-                shown_count=note_view.shown_count + 1,
-                last_visit_number=visit_count,
                 last_shown_at=now,
             )

@@ -39,7 +39,7 @@ class NoteService:
         notes = notes_query.limit(limit).offset(offset).all()
 
         if not notes:
-            raise ObjectNotFound(Note, 'all')
+            raise ObjectNotFound(Note, "all")
 
         return notes
 
@@ -104,7 +104,9 @@ class ServiceManager:
         Service.get(session=db.session, id=id)
         Service.delete(session=db.session, id=id)
         return StatusResponseModel(
-            status="Success", message="Service has been successfully deleted", ru="Сервис успешно удален"
+            status="Success",
+            message="Service has been successfully deleted",
+            ru="Сервис успешно удален",
         )
 
     @classmethod
@@ -132,7 +134,9 @@ class GroupService:
         Group.get(session=db.session, id=id)
         Group.delete(session=db.session, id=id)
         return StatusResponseModel(
-            status="Success", message="Group has been successfully deleted", ru="Группа успешно удалена"
+            status="Success",
+            message="Group has been successfully deleted",
+            ru="Группа успешно удалена",
         )
 
     @classmethod

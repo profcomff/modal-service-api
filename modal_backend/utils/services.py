@@ -1,17 +1,62 @@
 from datetime import datetime, timezone
+from typing import Union
 
 from requests import Session
 
-from modal_backend.exceptions import AlreadyExists, ForbiddenAction, ObjectNotFound
+from modal_backend.exceptions import AlreadyExists, ForbiddenAction, ObjectNotFound, ValueError
 from modal_backend.models.db import Group, ModalStatus, Note, Service
 from modal_backend.schemas.base import StatusResponseModel
-from modal_backend.schemas.models import GroupPost, ServicePost
+from modal_backend.schemas.models import (
+    GroupPost,
+    NoteChoicePost,
+    NoteImagePost,
+    NoteInfoPost,
+    NoteRatingPost,
+    NoteTextPost,
+    ServicePost,
+)
 
 
 class NoteService:
     """
     Сервис для работы с логикой Notifications и базой данных
     """
+
+    @classmethod
+    async def validate_note(
+        cls, db: Session, note: Union[NoteInfoPost, NoteRatingPost, NoteTextPost, NoteChoicePost, NoteImagePost]
+    ):
+        """Валидация полей при создании note"""
+        if note.is_always:
+            note.end_ts = None
+        elif note.end_ts is None or (note.start_ts is not None and note.start_ts >= note.end_ts):
+            raise ValueError("Invalid end_ts value")
+
+        if note.frequency < 1:
+            raise ValueError("Frequency must be greater than 0")
+        if not note.group_ids:
+            raise ValueError("Group ids must not be empty")
+        if not note.service_ids:
+            raise ValueError("Service ids must not be empty")
+
+        if isinstance(note, NoteRatingPost):
+            if note.rating_max is None or not (2 <= note.rating_max <= 10):
+                raise ValueError("Rating max must be between 2 and 10")
+        elif isinstance(note, NoteChoicePost):
+            if note.choice_options is None or len(note.choice_options) < 2:
+                raise ValueError("Choice options must contain at least 2 options")
+            if len({opt.id for opt in note.choice_options}) != len(note.choice_options):
+                raise ValueError("Choice options must have unique ids")
+            if not all(
+                opt.text for opt in note.choice_options
+            ):  # я так понял, что текст из пробелов это тоже текст. Поправьте если нет
+                raise ValueError("Choice options must have non-empty text")
+        elif isinstance(note, NoteImagePost):
+            if not note.images:
+                raise ValueError("Images must not be empty")
+        elif isinstance(note, NoteTextPost):
+            if note.max_length is None or not (1 <= note.max_length <= 5000):
+                raise ValueError("Max length must be between 1 and 5000")
 
     @classmethod
     async def get_notes_by_filters(

@@ -38,7 +38,7 @@ def resolve_items(n_list: list | Any, items: list) -> list | Any:
                 "header": "string",
                 "group_ids": [0],  # индексы
                 "service_ids": [0],  # индексы
-                "frequency": 0,
+                "frequency": 1,
                 "start_ts": "2026-08-04T17:21:45.694Z",
                 "end_ts": "2026-08-04T17:22:45.694Z",
                 "is_always": False,
@@ -53,11 +53,11 @@ def resolve_items(n_list: list | Any, items: list) -> list | Any:
                 "header": "string",
                 "group_ids": [0],  # индексы
                 "service_ids": [0],  # индексы
-                "frequency": 0,
+                "frequency": 1,
                 "start_ts": "2026-08-04T17:21:45.694Z",
                 "end_ts": "2026-08-04T17:22:45.694Z",
                 "is_always": True,
-                "rating_max": 0,
+                "rating_max": 5,
             },
             NoteRatingGet,
             "/rating",
@@ -68,7 +68,7 @@ def resolve_items(n_list: list | Any, items: list) -> list | Any:
                 "header": "string",
                 "group_ids": [0],  # индексы
                 "service_ids": [0],  # индексы
-                "frequency": 0,
+                "frequency": 1,
                 "start_ts": "2026-08-04T17:21:45.694Z",
                 "end_ts": "2026-08-04T17:22:45.694Z",
                 "is_always": False,
@@ -84,11 +84,11 @@ def resolve_items(n_list: list | Any, items: list) -> list | Any:
                 "header": "string",
                 "group_ids": [0],  # индексы
                 "service_ids": [0],  # индексы
-                "frequency": 0,
+                "frequency": 1,
                 "start_ts": "2026-08-04T17:21:45.694Z",
                 "end_ts": "2026-08-04T17:22:45.694Z",
                 "is_always": True,
-                "choice_options": [{"id": 0, "text": "string"}],
+                "choice_options": [{"id": 0, "text": "string"}, {"id": 1, "text": "string"}],
                 "is_multiple": True,
             },
             NoteChoiceGet,
@@ -100,7 +100,7 @@ def resolve_items(n_list: list | Any, items: list) -> list | Any:
                 "header": "string",
                 "group_ids": [0],  # индексы
                 "service_ids": [0],  # индексы
-                "frequency": 0,
+                "frequency": 1,
                 "start_ts": "2026-08-04T17:21:45.694Z",
                 "end_ts": "2026-08-04T17:22:45.694Z",
                 "is_always": False,
@@ -211,9 +211,76 @@ def test_create_all_type_of_note(client, dbsession, groups, services, status_cod
         assert response_model.status == note.status
         assert response_model.admin_id == note.admin_id
 
+        if json_body["is_always"]:
+            assert note.end_ts is None
+
         if type_model is NoteTextGet:
             assert len(note.text) <= note.max_length
         dbsession.delete(note)
+
+
+VALID_NOTE_BODIES: dict[str, dict] = {
+    "/info": {"info_text": "string"},
+    "/rating": {"rating_max": 5},
+    "/text": {"text": "string", "max_length": 6},
+    "/choice": {"choice_options": [{"id": 1, "text": "a"}, {"id": 2, "text": "b"}], "is_multiple": False},
+    "/image": {"images": ["string"]},
+}
+COMMON_NOTE_BODY: dict = {
+    "header": "string",
+    "group_ids": [1],
+    "service_ids": [1],
+    "frequency": 1,
+    "start_ts": "2026-08-04T17:21:45.694Z",
+    "end_ts": "2026-08-04T17:22:45.694Z",
+    "is_always": False,
+}
+
+
+@pytest.mark.parametrize(
+    "path, overrides",
+    [
+        pytest.param("/info", {"end_ts": None}, id="end_ts_required_if_not_always"),
+        pytest.param("/info", {"end_ts": "2026-08-04T17:21:45.694Z"}, id="start_ts_equals_end_ts"),
+        pytest.param("/info", {"end_ts": "2026-08-04T17:00:00.000Z"}, id="start_ts_after_end_ts"),
+        pytest.param("/info", {"frequency": 0}, id="frequency_zero"),
+        pytest.param("/info", {"frequency": -1}, id="frequency_negative"),
+        pytest.param("/info", {"group_ids": []}, id="group_ids_empty"),
+        pytest.param("/info", {"group_ids": None}, id="group_ids_null"),
+        pytest.param("/info", {"service_ids": []}, id="service_ids_empty"),
+        pytest.param("/info", {"service_ids": None}, id="service_ids_null"),
+        pytest.param("/rating", {"rating_max": 1}, id="rating_max_below_min"),
+        pytest.param("/rating", {"rating_max": 11}, id="rating_max_above_max"),
+        pytest.param("/rating", {"rating_max": None}, id="rating_max_missing"),
+        pytest.param("/text", {"max_length": 0}, id="max_length_below_min"),
+        pytest.param("/text", {"max_length": 5001}, id="max_length_above_max"),
+        pytest.param("/text", {"max_length": None}, id="max_length_missing"),
+        pytest.param("/choice", {"choice_options": [{"id": 1, "text": "a"}]}, id="choice_options_one_option"),
+        pytest.param("/choice", {"choice_options": None}, id="choice_options_missing"),
+        pytest.param(
+            "/choice", {"choice_options": [{"id": 1, "text": "a"}, {"id": 1, "text": "b"}]}, id="choice_options_same_id"
+        ),
+        pytest.param(
+            "/choice",
+            {"choice_options": [{"id": 1, "text": "a"}, {"id": 2, "text": ""}]},
+            id="choice_options_empty_text",
+        ),
+        pytest.param("/image", {"images": []}, id="images_empty"),
+        pytest.param("/image", {"images": None}, id="images_missing"),
+    ],
+)
+def test_create_note_validation_error(client, path, overrides):
+    """
+    Нарушение правил валидации из ТЗ даёт 422 в формате StatusResponseModel.
+    Проверка `status == "Error"` отличает нашу валидацию от стандартной ошибки pydantic (`{"detail": [...]}`).
+    Ошибки возникают до обращения к БД, поэтому группы и сервисы в БД не нужны.
+    """
+    body = {**COMMON_NOTE_BODY, **VALID_NOTE_BODIES[path], **overrides}
+
+    response = client.post(f"{url}{path}", json=body)
+
+    assert response.status_code == status.HTTP_422_UNPROCESSABLE_CONTENT
+    assert response.json()["status"] == "Error"
 
 
 def calculate_expected_len(

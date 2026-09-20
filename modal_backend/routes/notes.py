@@ -23,7 +23,6 @@ from modal_backend.schemas.models import (
     NoteStatus,
     NoteTextGet,
     NoteTextPost,
-    NotificationGet,
 )
 from modal_backend.settings import Settings, get_settings
 from modal_backend.utils.services import NoteService
@@ -98,9 +97,7 @@ async def get_note(
 
 
 @note.post("/info", response_model=NoteInfoGet)
-async def create_note_info(
-    note: NoteInfoPost, user=Depends(UnionAuth(scopes=["modal.note.create"]))
-) -> NotificationGet:
+async def create_note_info(note: NoteInfoPost, user=Depends(UnionAuth(scopes=["modal.note.create"]))) -> NoteInfoGet:
     """
     Создает новую модалку.
 
@@ -110,6 +107,7 @@ async def create_note_info(
 
     Права: `["modal.note.create"]`
     """
+    await NoteService.validate_note(db, note=note)
     new_note = Note.create(
         session=db.session,
         type_id=NoteTypeEnum.INFO,
@@ -123,7 +121,7 @@ async def create_note_info(
 @note.post("/rating", response_model=NoteRatingGet)
 async def create_note_rating(
     note: NoteRatingPost, user=Depends(UnionAuth(scopes=["modal.note.create"]))
-) -> NotificationGet:
+) -> NoteRatingGet:
     """
     Создает новую модалку.
 
@@ -133,6 +131,7 @@ async def create_note_rating(
 
     Права: `["modal.note.create"]`
     """
+    await NoteService.validate_note(db, note=note)
     new_note = Note.create(
         session=db.session,
         type_id=NoteTypeEnum.RATING,
@@ -144,9 +143,7 @@ async def create_note_rating(
 
 
 @note.post("/text", response_model=NoteTextGet)
-async def create_note_text(
-    note: NoteTextPost, user=Depends(UnionAuth(scopes=["modal.note.create"]))
-) -> NotificationGet:
+async def create_note_text(note: NoteTextPost, user=Depends(UnionAuth(scopes=["modal.note.create"]))) -> NoteTextGet:
     """
     Создает новую модалку.
 
@@ -156,6 +153,7 @@ async def create_note_text(
 
     Права: `["modal.note.create"]`
     """
+    await NoteService.validate_note(db, note=note)
     new_note = Note.create(
         session=db.session,
         type_id=NoteTypeEnum.TEXT,
@@ -169,7 +167,7 @@ async def create_note_text(
 @note.post("/choice", response_model=NoteChoiceGet)
 async def create_note_choice(
     note: NoteChoicePost, user=Depends(UnionAuth(scopes=["modal.note.create"]))
-) -> NotificationGet:
+) -> NoteChoiceGet:
     """
     Создает новую модалку.
 
@@ -179,6 +177,7 @@ async def create_note_choice(
 
     Права: `["modal.note.create"]`
     """
+    await NoteService.validate_note(db, note=note)
     new_note = Note.create(
         session=db.session,
         type_id=NoteTypeEnum.CHOICE,
@@ -192,7 +191,7 @@ async def create_note_choice(
 @note.post("/image", response_model=NoteImageGet)
 async def create_note_images(
     note: NoteImagePost, user=Depends(UnionAuth(scopes=["modal.note.create"]))
-) -> NotificationGet:
+) -> NoteImageGet:
     """
     Создает новую модалку.
 
@@ -202,6 +201,7 @@ async def create_note_images(
 
     Права: `["modal.note.create"]`
     """
+    await NoteService.validate_note(db, note=note)
     new_note = Note.create(
         session=db.session,
         type_id=NoteTypeEnum.IMAGE,

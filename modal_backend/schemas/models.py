@@ -8,7 +8,7 @@ class NoteGet(Base):
     id: int
     type_id: int
     header: str
-    end_ts: datetime.datetime
+    end_ts: datetime.datetime | None  # по тз может быть null, если is_always = true
     status: ModalStatus
 
 

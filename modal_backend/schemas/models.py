@@ -115,6 +115,11 @@ class NoteStatus(Base):
     status: ModalStatus
 
 
+class NoteRestoreStatus(NoteStatus):
+    removed_group_ids: list[int]
+    removed_service_ids: list[int]
+
+
 class NoteResponseGet(Base):
     id: int
     note_id: int

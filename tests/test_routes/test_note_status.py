@@ -29,6 +29,9 @@ def test_archive(client, dbsession, notes, index, expected_status):
     id = note_id(notes, index)
     response = client.post(f"{URL}/{id}/archive")
     assert response.status_code == expected_status
+    if expected_status == status.HTTP_409_CONFLICT:
+        assert response.json()["ru"] == "Модалка уже в архиве"
+        assert response.json()["message"] == "Notification is already archived"
     if expected_status == status.HTTP_200_OK:
         assert response.json() == {"id": id, "status": ModalStatus.ARCHIVED.value}
         assert fresh_note(dbsession, id).status == ModalStatus.ARCHIVED
@@ -67,6 +70,9 @@ def test_restore(client, dbsession, mock_datetime_now, notes, index, expected_st
 
     response = client.post(f"{URL}/{id}/restore")
     assert response.status_code == expected_status
+    if expected_status == status.HTTP_409_CONFLICT:
+        assert response.json()["ru"] == "Модалка уже активна"
+        assert response.json()["message"] == "Notification is already active"
     if expected_status == status.HTTP_200_OK:
         assert response.json() == {
             "id": id,

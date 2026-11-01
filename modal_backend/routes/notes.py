@@ -38,10 +38,6 @@ async def get_notes(
     type_id: int = Query(None),
     groups_id: list[int] = Query(None),
     services_id: list[int] = Query(None),
-    # status: ModalStatus = Query(
-    #     enum=["active", "archived"],
-    #     default=None,
-    # ),
     status: ModalStatus | None = Query(default=None),
     asc_order: bool = False,
     limit: int = Query(10, ge=0, description="Лимит записей"),

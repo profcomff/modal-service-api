@@ -2,7 +2,7 @@ from datetime import datetime, timezone
 
 from requests import Session
 
-from modal_backend.exceptions import AlreadyExists, ForbiddenAction, ObjectNotFound
+from modal_backend.exceptions import AlreadyExists, ForbiddenAction, InvalidStatusTransition, ObjectNotFound
 from modal_backend.models.db import Group, ModalStatus, Note, Service
 from modal_backend.schemas.base import StatusResponseModel
 from modal_backend.schemas.models import GroupPost, ServicePost
@@ -48,7 +48,7 @@ class NoteService:
         """Move an active notification to the archive."""
         note = Note.get(session=db.session, id=id)
         if note.status != ModalStatus.ACTIVE:
-            raise AlreadyExists(Note, id)
+            raise InvalidStatusTransition(note.status)
         return Note.update(id=id, session=db.session, status=ModalStatus.ARCHIVED)
 
     @classmethod
@@ -56,7 +56,7 @@ class NoteService:
         """Restore a notification, dropping unavailable external group/service IDs."""
         note = Note.get(session=db.session, id=id)
         if note.status != ModalStatus.ARCHIVED:
-            raise AlreadyExists(Note, id)
+            raise InvalidStatusTransition(note.status)
 
         now = datetime.now(timezone.utc).replace(tzinfo=None)
         if not note.is_always and note.end_ts is not None and now >= note.end_ts:

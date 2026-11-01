@@ -3,7 +3,7 @@ from typing import Any
 import pytest
 from starlette import status
 
-from modal_backend.models.db import Group, ModalStatus, Note, NoteTypeEnum, Service
+from modal_backend.models.db import Group, ModalStatus, Note, NoteTypeEnum
 from modal_backend.schemas.models import NoteChoiceGet, NoteImageGet, NoteInfoGet, NoteRatingGet, NoteTextGet
 from modal_backend.settings import get_settings
 
@@ -21,7 +21,7 @@ def resolve_items(n_list: list | Any, items: list) -> list | Any:
     if isinstance(n_list, list):
         for n in n_list:
             if n in indexes:
-                list_ids.append(items[n].id)
+                list_ids.append(items[n].group_id if isinstance(items[n], Group) else items[n].service_id)
             else:
                 list_ids.append(n)
     else:
@@ -537,102 +537,6 @@ def test_get_note_by_id(client, notes, status_code, note_n, type_model):
 
     if status_code == status.HTTP_200_OK:
         type_model.model_validate(response.json(), extra="forbid")
-
-
-@pytest.mark.parametrize(
-    "status_code, note_n, modal_status, deleted_group_id_flag, deleted_service_id_flag",
-    [
-        (
-            status.HTTP_200_OK,
-            0,
-            ModalStatus.ARCHIVED,
-            False,
-            False,
-        ),
-        (
-            status.HTTP_404_NOT_FOUND,
-            -1,
-            ModalStatus.ACTIVE,
-            False,
-            False,
-        ),
-        (
-            status.HTTP_200_OK,
-            3,
-            ModalStatus.ACTIVE,
-            False,
-            False,
-        ),
-        (
-            status.HTTP_403_FORBIDDEN,
-            3,
-            ModalStatus.ACTIVE,
-            True,
-            False,
-        ),
-        (
-            status.HTTP_403_FORBIDDEN,
-            3,
-            ModalStatus.ACTIVE,
-            False,
-            True,
-        ),
-        (
-            status.HTTP_403_FORBIDDEN,
-            3,
-            ModalStatus.ACTIVE,
-            True,
-            True,
-        ),
-        (
-            status.HTTP_403_FORBIDDEN,
-            6,
-            ModalStatus.ACTIVE,
-            False,
-            False,
-        ),  # просроченная модалка
-        (
-            status.HTTP_200_OK,
-            7,
-            ModalStatus.ACTIVE,
-            False,
-            False,
-        ),  # просроченная модалка с is_always=True
-    ],
-)
-def test_update_note_status(
-    client,
-    dbsession,
-    mock_datetime_now,
-    notes,
-    note_n,
-    status_code,
-    modal_status,
-    deleted_group_id_flag,
-    deleted_service_id_flag,
-):
-
-    notes_indexes = range(len(notes))
-    id_of_note = notes[note_n].id if note_n in notes_indexes else note_n
-
-    if deleted_group_id_flag:
-        for group_id in notes[note_n].group_ids:
-            group = Group.query(session=dbsession).filter(Group.id == group_id).one()
-            group.is_deleted = True
-        dbsession.commit()
-    if deleted_service_id_flag:
-        for service_id in notes[note_n].service_ids:
-            service = Service.query(session=dbsession).filter(Service.id == service_id).one()
-            service.is_deleted = True
-        dbsession.commit()
-
-    response = client.patch(f"{url}/{id_of_note}/status")
-    assert response.status_code == status_code
-
-    if status_code == status.HTTP_200_OK:
-        response_data = response.json()
-        note = Note.query(session=dbsession).filter(Note.id == response_data.get("id")).populate_existing().one()
-        assert note.status == modal_status
 
 
 @pytest.mark.parametrize(

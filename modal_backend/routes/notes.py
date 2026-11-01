@@ -20,6 +20,7 @@ from modal_backend.schemas.models import (
     NoteResponseChoiceGet,
     NoteResponseRatingGet,
     NoteResponseTextGet,
+    NoteRestoreStatus,
     NoteStatus,
     NoteTextGet,
     NoteTextPost,
@@ -37,10 +38,7 @@ async def get_notes(
     type_id: int = Query(None),
     groups_id: list[int] = Query(None),
     services_id: list[int] = Query(None),
-    status: ModalStatus = Query(
-        enum=["active", "archived"],
-        default=None,
-    ),
+    status: ModalStatus | None = Query(default=None),
     asc_order: bool = False,
     limit: int = Query(10, ge=0, description="Лимит записей"),
     offset: int = Query(0, ge=0, description="Смещение записей на N+offset, где N - первая запись"),
@@ -256,27 +254,37 @@ async def get_note_responses(
     return [schema_type.model_validate(response) for response in responses]
 
 
-@note.patch("/{id}/status", response_model=NoteStatus)
-async def update_note_status(id: int, user=Depends(UnionAuth(scopes=["modal.note.patch"]))) -> NoteStatus:
+@note.post("/{id}/archive", response_model=NoteStatus)
+async def archive_note(id: int, user=Depends(UnionAuth(scopes=["modal.note.patch"]))) -> NoteStatus:
     """
-    Архивирует модалку, если она активна
+    Архивировать активную модалку (ACTIVE → ARCHIVED).
 
-    Если модалка в архиве, возвращает её в активное состояние, убирая из `group_ids` и `service_ids` ненайденные группы и сервисы
-
-    Права: `["modal.note.patch"]`
-
-    Исключение **ObjectNotFound**, если `id` не найден
-
-    Исключения, которые могут возникнуть при возврате в активное состояние:
-
-    Исключение **ForbiddenAction**, если ни одна группа из списка `group_ids` не найдена
-
-    Исключение **ForbiddenAction**, если ни один сервис из списка `service_ids` не найден
-
-    Исключение **ForbiddenAction**, если время модалки истекло
+    Права: `["modal.note.patch"]`.
+    **404**, если модалка не найдена; **409**, если уже в архиве.
     """
-    updated_note = await NoteService.update_status(db, id=id)
+    updated_note = await NoteService.archive(db, id=id)
     return NoteStatus.model_validate(updated_note)
+
+
+@note.post("/{id}/restore", response_model=NoteRestoreStatus)
+async def restore_note(id: int, user=Depends(UnionAuth(scopes=["modal.note.patch"]))) -> NoteRestoreStatus:
+    """
+    Восстановить архивную модалку (ARCHIVED → ACTIVE).
+
+    Несуществующие или удалённые группы/сервисы исключаются по их внешним ID.
+    В ответе возвращаются исключённые идентификаторы.
+
+    Права: `["modal.note.patch"]`.
+    **404**, если модалка не найдена; **409**, если уже активна.
+    **403**, если после очистки нет групп или сервисов либо срок истёк.
+    """
+    updated_note, removed_group_ids, removed_service_ids = await NoteService.restore(db, id=id)
+    return NoteRestoreStatus(
+        id=updated_note.id,
+        status=updated_note.status,
+        removed_group_ids=removed_group_ids,
+        removed_service_ids=removed_service_ids,
+    )
 
 
 @note.delete("/{id}", response_model=StatusResponseModel)

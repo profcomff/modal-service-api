@@ -27,6 +27,22 @@ class AlreadyExists(ModalApiError):
         )
 
 
+class InvalidStatusTransition(ModalApiError):
+    """An archive/restore request is inconsistent with the current status."""
+
+    def __init__(self, current_status: str):
+        if current_status == "archived":
+            eng = "Notification is already archived"
+            ru = "Модалка уже в архиве"
+        elif current_status == "active":
+            eng = "Notification is already active"
+            ru = "Модалка уже активна"
+        else:
+            eng = f"Invalid notification status transition from {current_status}"
+            ru = f"Недопустимый переход статуса модалки из {current_status}"
+        super().__init__(eng, ru)
+
+
 class ForbiddenAction(ModalApiError):
     def __init__(self, type: Type):
         super().__init__(f"Forbidden action with {type.__name__}", f"Запрещенное действие с объектом {type.__name__}")

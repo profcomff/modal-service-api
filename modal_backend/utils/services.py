@@ -2,7 +2,7 @@ from datetime import datetime, timezone
 
 from requests import Session
 
-from modal_backend.exceptions import AlreadyExists, ForbiddenAction, ObjectNotFound
+from modal_backend.exceptions import AlreadyExists, ForbiddenAction, InvalidStatusTransition, ObjectNotFound
 from modal_backend.models.db import Group, ModalStatus, Note, Service
 from modal_backend.schemas.base import StatusResponseModel
 from modal_backend.schemas.models import GroupPost, ServicePost
@@ -44,46 +44,56 @@ class NoteService:
         return notes
 
     @classmethod
-    async def update_status(cls, db: Session, id: int) -> Note:
+    async def archive(cls, db: Session, id: int) -> Note:
+        """Move an active notification to the archive."""
         note = Note.get(session=db.session, id=id)
-        if note.status == ModalStatus.ACTIVE:
-            updated_note = Note.update(id=id, session=db.session, status=ModalStatus.ARCHIVED)
-            return updated_note
-        else:
-            group_ids = note.group_ids
-            new_group_ids = []
-            for group_id in group_ids:
-                group = db.session.query(Group).filter(Group.id == group_id, Group.is_deleted == False).one_or_none()
-                if group is not None:
-                    new_group_ids.append(group.id)
-            if new_group_ids == []:
-                raise ForbiddenAction(Note)
+        if note.status != ModalStatus.ACTIVE:
+            raise InvalidStatusTransition(note.status)
+        return Note.update(id=id, session=db.session, status=ModalStatus.ARCHIVED)
 
-            service_ids = note.service_ids
-            new_service_ids = []
-            for service_id in service_ids:
-                service = (
-                    db.session.query(Service)
-                    .filter(Service.id == service_id, Service.is_deleted == False)
-                    .one_or_none()
-                )
-                if service is not None:
-                    new_service_ids.append(service.id)
-            if new_service_ids == []:
-                raise ForbiddenAction(Note)
+    @classmethod
+    async def restore(cls, db: Session, id: int) -> tuple[Note, list[int], list[int]]:
+        """Restore a notification, dropping unavailable external group/service IDs."""
+        note = Note.get(session=db.session, id=id)
+        if note.status != ModalStatus.ARCHIVED:
+            raise InvalidStatusTransition(note.status)
 
-            end_ts = note.end_ts
-            time = datetime.now(timezone.utc).replace(tzinfo=None)
-            if note.is_always == False and time >= end_ts:
-                raise ForbiddenAction(Note)
-            updated_note = Note.update(
-                id=id,
-                session=db.session,
-                group_ids=new_group_ids,
-                service_ids=new_service_ids,
-                status=ModalStatus.ACTIVE,
-            )
-            return updated_note
+        now = datetime.now(timezone.utc).replace(tzinfo=None)
+        if not note.is_always and note.end_ts is not None and now >= note.end_ts:
+            raise ForbiddenAction(Note)
+
+        group_ids = note.group_ids or []
+        existing_group_ids = {
+            group_id
+            for (group_id,) in db.session.query(Group.group_id)
+            .filter(Group.group_id.in_(group_ids), Group.is_deleted.is_(False))
+            .all()
+        }
+        new_group_ids = [group_id for group_id in group_ids if group_id in existing_group_ids]
+        if not new_group_ids:
+            raise ForbiddenAction(Note)
+
+        service_ids = note.service_ids or []
+        existing_service_ids = {
+            service_id
+            for (service_id,) in db.session.query(Service.service_id)
+            .filter(Service.service_id.in_(service_ids), Service.is_deleted.is_(False))
+            .all()
+        }
+        new_service_ids = [service_id for service_id in service_ids if service_id in existing_service_ids]
+        if not new_service_ids:
+            raise ForbiddenAction(Note)
+
+        removed_group_ids = [group_id for group_id in group_ids if group_id not in existing_group_ids]
+        removed_service_ids = [service_id for service_id in service_ids if service_id not in existing_service_ids]
+        updated_note = Note.update(
+            id=id,
+            session=db.session,
+            group_ids=new_group_ids,
+            service_ids=new_service_ids,
+            status=ModalStatus.ACTIVE,
+        )
+        return updated_note, removed_group_ids, removed_service_ids
 
 
 class ServiceManager:

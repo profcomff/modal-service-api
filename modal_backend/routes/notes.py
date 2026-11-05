@@ -255,6 +255,8 @@ async def update_note_image(
 ) -> NoteImageGet:
     updated_note = await NoteService.update_note(db, id, note_info, NoteTypeEnum.IMAGE)
     return NoteImageGet.model_validate(updated_note)
+
+
 @note.get(
     "/{id}/responses",
     response_model=list[Union[NoteResponseRatingGet, NoteResponseTextGet, NoteResponseChoiceGet]],
